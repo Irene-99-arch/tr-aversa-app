@@ -314,9 +314,8 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      align-items: stretch;
-      max-width: 100%;
-      margin: 8px auto 0 auto;   /* leggero spazio sotto il logo e centrato */
+      align-items: center;     /* centra la colonna dei pulsanti */
+      width: 100%;
     }
 
     .card-btn {
@@ -330,6 +329,8 @@
       cursor: pointer;
       transition: 0.2s ease;
       width: 100%;
+      max-width: 340px;        /* larghezza massima del pulsante */
+      margin: 0 auto;          /* centra il pulsante sotto il logo */
     }
 
     .card-btn:hover {
