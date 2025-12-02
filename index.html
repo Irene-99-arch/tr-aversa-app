@@ -57,10 +57,10 @@
       padding-bottom: 16px;  /* un po' di respiro sotto allo specchietto */
     }
 
-    /* Scroll generale quando sei in Ricostruzioni Immersive */
+    /* Ricostruzioni Immersive: la pagina NON scrolla, scorre solo la lista */
     .phone.immersive-open {
-      overflow-y: auto;
-      padding-bottom: 16px;  /* respiro sotto alla lista/chiese immersive */
+      overflow-y: hidden;
+      padding-bottom: 0;
     }
 
     /* Barra superiore con freccia e lente */
@@ -331,7 +331,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
-      align-items: center;     /* centra la colonna dei pulsanti */
+      align-items: center;
       width: 100%;
     }
 
@@ -341,13 +341,18 @@
       padding: 14px 10px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       background: #fafafa;
       cursor: pointer;
       transition: 0.2s ease;
-      width: calc(100% - 50px);   /* larghezza totale meno 10px+10px */
-      margin: 0 10px;             /* 10px ai lati */
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
       gap: 10px;
+    }
+
+    .card-btn {
+      justify-content: center; /* CENTRA icona + testo */
     }
 
     .card-btn:hover {
@@ -378,6 +383,7 @@
       justify-content: center;
       align-items: flex-start;
       text-align: left;   /* il testo resta allineato a sinistra */
+      width: 180px;   /* uniforma la larghezza del blocco testo */
     }
 
     .card-title {
@@ -463,6 +469,27 @@
       max-height: 100%;
       overflow-y: auto;
       padding-right: 4px;
+    }
+
+    /* Ricostruzioni Immersive: titolo fisso, lista che scrolla */
+    #immersive-list {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;          /* tutta la schermata */
+      overflow: hidden;       /* impedisce lo scroll del wrapper */
+    }
+
+    #immersive-list .digital-header {
+      flex-shrink: 0;         /* il titolo resta fisso */
+      padding-bottom: 8px;
+    }
+
+    #immersive-churches {
+      flex: 1;
+      max-height: 100%;
+      overflow-y: auto;       /* solo la lista scorre */
+      padding-right: 4px;
+      padding-bottom: 20px;   /* spazio finale */
     }
 
     .church-card {
