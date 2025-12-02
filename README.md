@@ -1,1 +1,0 @@
-TR-AVERSA app repository
