@@ -3270,27 +3270,28 @@
     let galleryTouchStartX = null;
 
     function buildGalleryGrid() {
-      const grid = document.getElementById('gallery-grid');
-      if (!grid) return;
-      grid.innerHTML = "";
-      galleryImages.forEach((src, index) => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
+        const grid = document.getElementById('gallery-grid');
+        if (!grid) return;
+        grid.innerHTML = "";
 
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = "San Lorenzo";
-        item.appendChild(img);
+        galleryImages.forEach((src, index) => {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
 
-        // click "pulito" che non passa al resto della pagina
-        item.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          openGalleryViewer(index);
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = "San Lorenzo";
+            img.loading = "lazy";
+            item.appendChild(img);
+
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openGalleryViewer(index);
+            });
+
+            grid.appendChild(item);
         });
-
-        grid.appendChild(item);
-      });
     }
 
     function openGalleryViewer(index) {
