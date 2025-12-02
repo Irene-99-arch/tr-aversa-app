@@ -43,7 +43,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Attivo subito la nuova versione e pulisco le vecchie
+// Attivo la nuova versione e elimino cache vecchie
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
@@ -84,7 +84,6 @@ self.addEventListener('fetch', (event) => {
           });
           return response;
         }).catch(() => {
-          // niente immagine di fallback → solo 404 “silenziosa”
           return new Response('', { status: 404 });
         });
       })
@@ -92,7 +91,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3) Altre richieste: cache se presente, altrimenti rete
+  // 3) Tutto il resto: se è in cache uso quella, altrimenti rete
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
