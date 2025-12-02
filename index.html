@@ -57,6 +57,12 @@
       padding-bottom: 16px;  /* un po' di respiro sotto allo specchietto */
     }
 
+    /* Scroll generale quando sei in Ricostruzioni Immersive */
+    .phone.immersive-open {
+      overflow-y: auto;
+      padding-bottom: 16px;  /* respiro sotto alla lista/chiese immersive */
+    }
+
     /* Barra superiore con freccia e lente */
     .top-bar {
       display: none;
@@ -3479,6 +3485,9 @@
         // tolgo il tema rosso
         document.getElementById('digital-screen').classList.remove('immersive-theme');
 
+        // disabilito lo scroll pagina quando esco da Ricostruzioni Immersive
+        if (phone) phone.classList.remove('immersive-open');
+
         return;
       }
 
@@ -4538,6 +4547,7 @@ Le stratificazioni storiche, dal nucleo normanno alla città contemporanea, conv
       const immersive = document.getElementById('immersive-list');
       const header    = document.querySelector('#digital-screen .digital-header');
       const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+      const phone     = document.getElementById('phone');
 
       // nascondo header, sottotitolo, barra rossa e le 3 card
       if (header)    header.style.display = 'none';
@@ -4545,11 +4555,21 @@ Le stratificazioni storiche, dal nucleo normanno alla città contemporanea, conv
       if (list)      list.style.display = 'none';
 
       // mostro la lista immersive con transizione
-      immersive.style.display = 'block';
-      immersive.classList.add('digital-section-visible');
+      if (immersive) {
+        immersive.style.display = 'block';
+        immersive.classList.add('digital-section-visible');
+      }
 
       // attivo il tema rosso sulle card delle chiese
-      document.getElementById('digital-screen').classList.add('immersive-theme');
+      const digitalScreen = document.getElementById('digital-screen');
+      if (digitalScreen) {
+        digitalScreen.classList.add('immersive-theme');
+      }
+
+      // abilito lo scroll della pagina quando sono nelle Ricostruzioni Immersive
+      if (phone) {
+        phone.classList.add('immersive-open');
+      }
 
       // riempio la lista
       renderImmersiveList();
