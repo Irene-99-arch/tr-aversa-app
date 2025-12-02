@@ -51,6 +51,12 @@
       padding-bottom: 16px;  /* meno spazio sotto allo specchietto quando scrolli tutta la pagina */
     }
 
+    /* Scroll generale quando sei nel Percorso base – 1h */
+    .phone.base-open {
+      overflow-y: auto;
+      padding-bottom: 16px;  /* un po' di respiro sotto allo specchietto */
+    }
+
     /* Barra superiore con freccia e lente */
     .top-bar {
       display: none;
@@ -212,15 +218,20 @@
       transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
-    /* Scroll abilitato SOLO per Community */
-/* Scroll Community + spazio sotto alla barra "Lascia un Feedback!" */
-.phone.community-open #community-screen {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding-bottom: 24px;   /* aumenta se vuoi ancora più spazio */
-}
+    /* Scroll Community: scorre tutta la pagina del telefono */
+    .phone.community-open {
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 24px;   /* spazio sotto alla parte finale (social / bottoni) */
+    }
 
-#home-screen {
+    /* La schermata Community occupa almeno il 100% dello schermo */
+    #community-screen {
+      min-height: 100vh;
+      height: auto;
+    }
+
+    #home-screen {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
@@ -328,7 +339,7 @@
       background: #fafafa;
       cursor: pointer;
       transition: 0.2s ease;
-      width: calc(100% - 150px);   /* larghezza totale meno 10px+10px */
+      width: calc(100% - 200px);   /* larghezza totale meno 10px+10px */
       margin: 0 10px;             /* 10px ai lati */
       gap: 10px;
     }
@@ -1444,11 +1455,10 @@
       right: -36px;
     }
 
-    /* PERCORSO BASE: body senza limite di altezza */
+    /* PERCORSO BASE: la card occupa almeno tutto lo schermo,
+      ma lo scroll lo fa l'intera pagina del telefono */
     #percorso-base-screen .detail-body {
       min-height: 100vh;
-      height: 100%;
-      overflow-y: auto;
       border: 1px solid #d2c8b8;
       border-radius: 14px;
       padding: 12px;
@@ -1798,6 +1808,11 @@
     }
 
     /* COMMUNITY */
+
+    #community-screen {
+      min-height: 100vh;   /* la schermata occupa sempre tutto lo schermo */
+      height: auto;
+    }
 
     .community-header {
       text-align: center;
