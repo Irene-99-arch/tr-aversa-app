@@ -3276,11 +3276,19 @@
       galleryImages.forEach((src, index) => {
         const item = document.createElement('div');
         item.className = 'gallery-item';
+
         const img = document.createElement('img');
         img.src = src;
         img.alt = "San Lorenzo";
         item.appendChild(img);
-        item.onclick = () => openGalleryViewer(index);
+
+        // click "pulito" che non passa al resto della pagina
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openGalleryViewer(index);
+        });
+
         grid.appendChild(item);
       });
     }
