@@ -1,0 +1,4969 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>TR-AVERSA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fdfaf4">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
+
+    .phone {
+      width: 360px;
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 24px 18px 32px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Scroll verticale solo quando la Timeline è aperta */
+    .phone.timeline-page-scroll {
+      overflow-y: auto;
+      padding-bottom: 16px;  /* meno spazio sotto allo specchietto quando scrolli tutta la pagina */
+    }
+
+    /* Barra superiore con freccia e lente */
+    .top-bar {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+.phone.catalog-open .top-bar,
+    .phone.insitu-open .top-bar,
+    .phone.digital-open .top-bar,
+    .phone.community-open .top-bar {
+      display: flex;
+    }
+
+    .back-icon,
+    .search-icon {
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .back-icon::before {
+      content: "\2190";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      font-weight: bold;
+      color: #00457c;
+    }
+
+    .search-icon::before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #00457c;
+      top: 3px;
+      left: 3px;
+    }
+
+    .search-icon::after {
+      content: "";
+      position: absolute;
+      width: 9px;
+      height: 2px;
+      background: #00457c;
+      transform: rotate(45deg);
+      right: 0;
+      bottom: 3px;
+      border-radius: 2px;
+    }
+
+    /* Barra di ricerca animata */
+    .search-wrapper {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+      margin-bottom: 4px;
+    }
+
+    .phone.search-open .search-wrapper {
+      max-height: 60px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .search-inner {
+      position: relative;
+      margin-top: 4px;
+    }
+
+    #search-bar {
+      width: 100%;
+      padding: 8px 26px 8px 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-family: "Times New Roman", serif;
+      font-size: 13px;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      color: #888;
+      display: none;
+      user-select: none;
+    }
+
+    .phone.search-open .search-clear.visible {
+      display: block;
+    }
+
+    /* Header con logo e titolo */
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+      transition: margin-bottom 0.35s ease, opacity 0.35s ease, max-height 0.35s ease;
+    }
+
+    .phone.detail-open .header,
+    .phone.base-open .header {
+      display: none;
+    }
+
+    .logo-img {
+      width: 90px;
+      display: block;
+      margin: 0 auto 6px auto;
+      transition: width 0.35s ease;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #00457c;
+      max-height: 40px;
+      overflow: hidden;
+      transition: opacity 0.35s ease, max-height 0.35s ease, margin-top 0.35s ease;
+    }
+
+.phone.catalog-open .logo-img,
+    .phone.insitu-open .logo-img,
+    .phone.digital-open .logo-img,
+    .phone.community-open .logo-img {
+      width: 60px;
+    }
+
+    .phone.catalog-open .logo-title,
+    .phone.insitu-open .logo-title,
+    .phone.digital-open .logo-title,
+    .phone.community-open .logo-title {
+      opacity: 0;
+      max-height: 0;
+      margin-top: 0;
+    }
+
+    /* Gestione schermate */
+    .screens-wrapper {
+      position: relative;
+      min-height: 410px;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      padding-top: 2px;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    /* Scroll abilitato SOLO per Community */
+/* Scroll Community + spazio sotto alla barra "Lascia un Feedback!" */
+.phone.community-open #community-screen {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 24px;   /* aumenta se vuoi ancora più spazio */
+}
+
+#home-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #catalog-screen,
+    #detail-screen,
+    #insitu-screen,
+    #percorso-base-screen,
+    #digital-screen,
+    #community-screen {
+      opacity: 0;
+      transform: translateY(30px);
+      pointer-events: none;
+    }
+
+    .phone.catalog-open:not(.detail-open) #catalog-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .phone.catalog-open #home-screen {
+      opacity: 0;
+      transform: translateY(-30px);
+      pointer-events: none;
+    }
+
+    .phone.insitu-open #insitu-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .phone.insitu-open #home-screen {
+      opacity: 0;
+      transform: translateY(-30px);
+      pointer-events: none;
+    }
+
+    .phone.digital-open #digital-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .phone.digital-open #home-screen {
+      opacity: 0;
+      transform: translateY(-30px);
+      pointer-events: none;
+    }
+
+    .phone.community-open #community-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .phone.community-open #home-screen {
+      opacity: 0;
+      transform: translateY(-30px);
+      pointer-events: none;
+    }
+
+    .phone.detail-open #detail-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .phone.detail-open #catalog-screen {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+
+    .phone.base-open #insitu-screen {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+
+    .phone.base-open #percorso-base-screen {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* MENU PRINCIPALE */
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-btn {
+      border-radius: 16px;
+      border: 1px solid #8B7E6D;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .card-btn:hover {
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .card-btn:active {
+      transform: scale(0.98);
+    }
+
+    .icon-img {
+      width: 52px;
+      height: 52px;
+      padding: 6px;
+      border: 1.5px solid #8B7E6D;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+      flex-shrink: 0;
+      margin-right: 14px;
+    }
+
+    .text-zone {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      text-align: center;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .blue  { color: #005b96; }
+    .red   { color: #c0392b; }
+    .green { color: #1e8449; }
+
+    .card-subtitle {
+      font-size: 12px;
+      font-style: italic;
+      color: #666;
+      line-height: 1.1;
+    }
+
+    /* CATALOGO */
+    .catalog-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .catalog-header-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 4px auto;
+    }
+
+    .catalog-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #005b96;
+    }
+
+    .catalog-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .tabs {
+      display: flex;
+      margin: 10px 0 8px 0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: 1px solid #005b96;
+      background: #f5f5f5;
+      color: #005b96;
+      font-family: "Times New Roman", serif;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .tab-btn:first-child {
+      border-radius: 999px 0 0 999px;
+    }
+
+    .tab-btn:last-child {
+      border-radius: 0 999px 999px 0;
+    }
+
+    .tab-btn:not(:first-child) {
+      border-left: none;
+    }
+
+    .tab-btn.active {
+      background: #005b96;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .catalog-list {
+      margin-top: 4px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .church-card {
+      display: flex;
+      align-items: center;
+      background: #f4f1ea;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #d8d0c4;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .church-card:hover {
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      background: #f8f3ea;
+    }
+
+    .church-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .church-divider {
+      width: 2px;
+      height: 60%;
+      background: #005b96;
+      margin: 0 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .church-text {
+      font-size: 13px;
+    }
+
+    .church-name {
+      font-weight: bold;
+      margin-bottom: 2px;
+      color: #005b96;   /* BLU DI BASE */
+    }
+
+    .church-address {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    /* PERIODO STORICO (dal catalogo) */
+    .period-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .period-card {
+      display: flex;
+      align-items: center;
+      background: #f4f1ea;
+      border-radius: 16px;
+      border: 1px solid #d8d0c4;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .period-card:hover {
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background: #faf5ec;
+    }
+
+    .period-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      flex-shrink: 0;
+      margin-right: 14px;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .period-card[data-period="medioevale"] .period-icon {
+      background-image: url("icons/periodo_medioevali.jpg");
+    }
+
+    .period-card[data-period="rinascimentale"] .period-icon {
+      background-image: url("icons/periodo_rinascimentali.jpg");
+    }
+
+    .period-card[data-period="barocca"] .period-icon {
+      background-image: url("icons/periodo_barocche.jpg");
+    }
+
+    .period-card[data-period="contemporanea"] .period-icon {
+      background-image: url("icons/periodo_contemporanee.jpg");
+    }
+
+    .period-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .period-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #005b96;
+      margin-bottom: 2px;
+    }
+
+    .period-subtitle {
+      font-size: 12px;
+      font-style: italic;
+      color: #777;
+    }
+
+    .period-results {
+      display: none;
+    }
+
+    .period-back {
+      font-size: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      color: #005b96;
+    }
+
+    .period-list-container {
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* PERCORSO IN SITU */
+    .insitu-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .insitu-header-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 4px auto;
+    }
+
+    .insitu-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #c0392b;
+    }
+
+    .insitu-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .insitu-tabs {
+      display: flex;
+      margin: 10px 0 8px 0;
+    }
+
+    .insitu-tab-btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: 1px solid #c0392b;
+      background: #f5f5f5;
+      color: #c0392b;
+      font-family: "Times New Roman", serif;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .insitu-tab-btn:first-child {
+      border-radius: 999px 0 0 999px;
+    }
+
+    .insitu-tab-btn:last-child {
+      border-radius: 0 999px 999px 0;
+    }
+
+    .insitu-tab-btn:not(:first-child) {
+      border-left: none;
+    }
+
+    .insitu-tab-btn.active {
+      background: #c0392b;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .insitu-list {
+      margin-top: 4px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .insitu-card {
+      display: flex;
+      align-items: center;
+      background: #f4f1ea;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #d8d0c4;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .insitu-card:hover {
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .insitu-card:active {
+      transform: scale(0.98);
+    }
+
+    .insitu-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      flex-shrink: 0;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin-right: 12px;
+    }
+
+    .insitu-text {
+      flex: 1;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .insitu-main {
+      font-weight: bold;
+      font-size: 14px;
+      color: #c0392b;
+      margin-bottom: 2px;
+    }
+
+    .insitu-desc {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+      line-height: 1.2;
+    }
+
+    .insitu-card.muted .insitu-main {
+      color: #8B7E6D;
+    }
+
+    /* PERCORSO DIGITALE */
+    .digital-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .digital-header-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 4px auto;
+    }
+
+    .digital-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #c0392b;
+    }
+
+    .digital-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .digital-menu-label {
+      background: #c0392b;
+      color: #ffffff;
+      text-align: center;
+      font-size: 12px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .digital-list {
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* TRANSIZIONE SEZIONI PERCORSO DIGITALE */
+    .digital-section {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .digital-section-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .digital-card {
+      display: flex;
+      align-items: center;
+      background: #f4f1ea;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #d8d0c4;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .digital-card:hover {
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .digital-card:active {
+      transform: scale(0.98);
+    }
+
+    .digital-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      flex-shrink: 0;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin-right: 12px;
+    }
+
+    .digital-text {
+      flex: 1;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .digital-main {
+      font-weight: bold;
+      font-size: 14px;
+      color: #c0392b;
+      margin-bottom: 2px;
+    }
+
+    .digital-desc {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+      line-height: 1.2;
+    }
+
+    /* Transizione pannelli interni del Percorso Digitale */
+    .digital-section {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .digital-section-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ESPLORAZIONE 3D – STREET VIEW */
+    .explore-3d-back {
+      font-size: 11px;
+      color: #005b96;
+      margin-bottom: 6px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .explore-3d-header {
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .explore-3d-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #c0392b;
+      margin-bottom: 2px;
+    }
+
+    .explore-3d-stop-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .explore-3d-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .explore-3d-btn {
+      border-radius: 999px;
+      border: 1px solid #c0392b;
+      background: #ffffff;
+      color: #c0392b;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+    }
+
+    .explore-3d-btn.active {
+      background: #c0392b;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .explore-3d-frame-wrapper {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #d8d0c4;
+      background: #000;
+    }
+
+    #streetview-frame {
+      width: 100%;
+      height: 220px;
+      border: 0;
+    }
+
+    /* PERSONALIZZA PERCORSO: builder */
+    .personalizza-builder {
+      margin-top: 8px;
+      background: #f8f3ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 8px 10px 10px;
+      font-size: 12px;
+    }
+
+    .personalizza-builder-title {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: #c0392b;
+    }
+
+    .builder-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .builder-list {
+      max-height: 150px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      background: #fdfaf4;
+      border: 1px solid #e3dacb;
+    }
+
+    .builder-row {
+      display: flex;
+      align-items: center;
+      padding: 4px 6px;
+      border-bottom: 1px solid #eee1cf;
+      gap: 6px;
+    }
+
+    .builder-row:last-child {
+      border-bottom: none;
+    }
+
+    .builder-row input[type="checkbox"] {
+      flex-shrink: 0;
+    }
+
+    .builder-row span {
+      font-size: 12px;
+    }
+
+    .builder-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .builder-name-row label {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .builder-name-row input {
+      flex: 1;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid #c9b9a2;
+      font-size: 12px;
+      font-family: "Times New Roman", serif;
+    }
+
+    .builder-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .btn-small {
+      border-radius: 999px;
+      border: 1px solid #c0392b;
+      background: #c0392b;
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+    }
+
+    .btn-small.secondary {
+      background: #fdfaf4;
+      color: #c0392b;
+    }
+
+    /* PERCORSI SALVATI */
+    .saved-routes-list {
+      margin-top: 8px;
+    }
+
+    .saved-route-card {
+      position: relative;
+    }
+
+    .route-menu-wrapper {
+      position: relative;
+      margin-left: 6px;
+    }
+
+    .route-menu-trigger {
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+    }
+
+    .route-menu {
+      position: absolute;
+      right: 0;
+      top: auto;
+      bottom: calc(100% + 4px);
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #d8d0c4;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 11px;
+      min-width: 150px;
+      display: none;
+      z-index: 50;
+    }
+
+    .route-menu.visible {
+      display: block;
+    }
+
+    .route-menu button {
+      width: 100%;
+      text-align: left;
+      padding: 6px 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: "Times New Roman", serif;
+      font-size: 11px;
+    }
+
+    .route-menu button:hover {
+      background: #f4f1ea;
+    }
+
+    .route-menu-icon {
+      flex-shrink: 0;
+    }
+
+    /* DETTAGLIO CHIESA */
+    .detail-header-card {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .detail-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      background: #fff;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .detail-header-text {
+      font-size: 13px;
+    }
+
+    .detail-header-name {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .detail-header-address {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .detail-tabs {
+      display: flex;
+      margin: 10px 0 8px 0;
+    }
+
+    .detail-tab-btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: 1px solid #005b96;
+      background: #f5f5f5;
+      color: #005b96;
+      font-family: "Times New Roman", serif;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .detail-tab-btn:first-child {
+      border-radius: 999px 0 0 999px;
+    }
+
+    .detail-tab-btn:last-child {
+      border-radius: 0 999px 999px 0;
+    }
+
+    .detail-tab-btn:not(:first-child) {
+      border-left: none;
+    }
+
+    .detail-tab-btn.active {
+      background: #005b96;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .detail-body {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 12px 12px 16px;
+      max-height: 270px;
+      overflow-y: auto;
+    }
+
+    .detail-section {
+      display: none;
+    }
+
+    .detail-section.active {
+      display: block;
+    }
+
+    .detail-text-block {
+      font-size: 12px;
+      line-height: 1.25;
+      text-align: justify;
+      color: #444;
+    }
+
+    .detail-text-block h3 {
+      font-size: 13px;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      text-align: left;
+      font-style: italic;
+    }
+
+    /* VIDEO RILIEVO */
+    .video-wrapper {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 8px;
+    }
+
+    #rilievo-video {
+      width: 100%;
+      border-radius: 8px;
+      background: #000;
+      display: block;
+    }
+
+    .video-controls {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .left-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      border: 1px solid #005b96;
+      background: #005b96;
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+    }
+
+    .volume-slider {
+      width: 90px;
+    }
+
+    /* GALLERY GRIGLIA */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+
+    .gallery-item {
+      background: #e0dbcf;
+      border-radius: 4px;
+      padding-bottom: 100%;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #d0c7b8;
+      cursor: pointer;
+    }
+
+    .gallery-item img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      left: 0;
+      top: 0;
+    }
+
+    /* MARKER TAPPE PERCORSO BASE */
+    .stop-marker {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      font-size: 12px;
+      background: #c0392b;
+      color: #fff;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stop-marker.active {
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.3);
+    }
+
+    
+    /* Contenitore mappa percorso base: forzo altezza per vedere anche i tasti */
+    .percorso-base-map-wrapper {
+      position: relative;
+      width: 100%;
+      padding-bottom: 177.78%; /* 9:16 come immagine 1080x1920 */
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .percorso-base-map-wrapper img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* mantiene le proporzioni 9:16 senza bande vuote */
+    }
+/* MODAL COMING SOON */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 18px 14px;
+      width: 280px;
+      max-width: 90%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      text-align: center;
+      border: 1px solid #d8d0c4;
+      animation: scaleIn 0.25s ease;
+    }
+
+    #feedback-modal .modal-title {
+      color: #1e8449;
+      }
+
+    .modal-title {
+      color: #005b96; /* BLU */
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #feedback-modal .modal-title {
+      color: #1e8449; /* VERDE SOLO PER COMMUNITY */
+    }
+
+    .modal-image {
+      width: 130px;
+      height: 130px;
+      border-radius: 14px;
+      border: 1px solid #d0c7b8;
+      object-fit: cover;
+      margin-bottom: 10px;
+      background: #f4f1ea;
+    }
+
+    .modal-text {
+      font-size: 12px;
+      margin-bottom: 12px;
+      color: #444;
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 10px;
+      background: #005b96; /* BLU */
+      color: #ffffff;
+      border-radius: 999px;
+      border: 1px solid #005b96;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+#feedback-modal .modal-btn {
+    background: #1e8449 !important; /* VERDE */
+    border-color: #1e8449 !important;
+}
+
+#feedback-modal .modal-btn.secondary {
+    background: #fdfaf4 !important;
+    color: #1e8449 !important;
+    border: 1px solid #1e8449 !important;
+}
+
+    .modal-btn.secondary {
+      background: #fdfaf4;     /* beige chiaro */
+      color: #1e8449;          /* verde */
+      border: 1px solid #1e8449;
+    }
+
+.feedback-textarea {
+  width: 100%;
+  min-height: 80px;
+  border-radius: 10px;
+  border: 1px solid #d0c7b8;
+  padding: 8px;
+  font-family: "Times New Roman", serif;
+  font-size: 12px;
+  resize: none;
+  margin-bottom: 10px;
+}
+
+/* ---- MODAL TEMA ROSSO SOLO IN PERCORSO DIGITALE ---- */
+#modal.digital-theme .modal-title {
+  color: #c0392b !important;
+}
+
+#modal.digital-theme .modal-btn {
+  background: #c0392b !important;
+}
+
+    /* LIGHTBOX GALLERY */
+    .gallery-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .gallery-overlay.visible {
+      display: flex;
+    }
+
+    .gallery-box {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .gallery-box img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .gallery-close,
+    .gallery-prev,
+    .gallery-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 26px;
+      color: #ffffff;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 999px;
+    }
+
+    .gallery-close {
+      top: 8%;
+      right: 6%;
+      transform: none;
+      font-size: 22px;
+    }
+
+    .gallery-prev {
+      left: -36px;
+    }
+
+    .gallery-next {
+      right: -36px;
+    }
+
+    /* PERCORSO BASE: body senza limite di altezza */
+    #percorso-base-screen .detail-body {
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    /* Intro overlay percorso base */
+    .percorso-intro-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+
+    .percorso-intro-overlay.visible {
+      display: flex;
+    }
+
+    .percorso-intro-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px 14px;
+      width: 85%;
+      max-width: 300px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      border: 1px solid #d8d0c4;
+      text-align: center;
+      position: relative;
+    }
+
+    .percorso-intro-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #c0392b;
+      font-size: 15px;
+    }
+
+    .percorso-intro-text {
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      color: #444;
+    }
+
+    .percorso-intro-btn {
+      border-radius: 999px;
+      border: none;
+      background: #c0392b;
+      color: #ffffff;
+      padding: 6px 16px;
+      font-family: "Times New Roman", serif;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .percorso-intro-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    /* Controlli audio specchietto tappa */
+    .stop-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .stop-controls-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* --- TEMA ROSSO IMMERSIVE (Ricostruzioni Immersive) --- */
+
+    #digital-screen.immersive-theme .church-card {
+      border: 1px solid #c0392b;      /* rosso */
+      background: #f8f3f0;            /* beige leggermente caldo */
+      transition: 0.2s ease;
+    }
+
+    #digital-screen.immersive-theme .church-card:hover {
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+    }
+
+    #digital-screen.immersive-theme .church-divider {
+      background: #c0392b;            /* linea rossa */
+    }
+
+    #digital-screen.immersive-theme .church-name {
+      color: #c0392b;                 /* titolo rosso */
+    }
+
+    /* Box panoramiche San Lorenzo (Ricostruzioni Immersive) */
+    #immersive-sanlorenzo-wrapper {
+      margin-top: 6px;
+    }
+
+    .immersive-panobox {
+      position: relative;
+      border-radius: 8px;
+      border: 1px solid #d8d0c4;
+      margin-top: 4px;
+      overflow: visible;   /* importante per far vedere il pannello sospeso */
+    }
+
+    .immersive-panobox-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      background: #f8f3ea;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .immersive-panobox-header-title {
+      margin-right: 8px;
+    }
+
+    .immersive-panobox-toggle-icon {
+      font-size: 11px;
+    }
+
+    .immersive-panobox-body {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;                  /* subito sotto l’header della box */
+      padding: 6px 8px 8px 8px;
+      background: #ffffff;
+      max-height: 150px;          /* altezza massima lista */
+      overflow-y: auto;
+      border-radius: 0 0 8px 8px; /* angoli inferiori arrotondati */
+      border: 1px solid #d8d0c4;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      z-index: 20;                /* sopra il viewer */
+    }
+
+    .immersive-group {
+      margin-bottom: 6px;
+    }
+
+    .immersive-group-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #444444;
+    }
+
+    .immersive-pano-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .immersive-pano-btn {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 11px;
+      background: #fdfaf4;
+      cursor: pointer;
+    }
+
+    .immersive-pano-btn.active {
+      border-color: #c0392b;
+      background: #f8e5df;
+      font-weight: bold;
+    }
+
+    .immersive-panorama-nav {
+      margin-top: 6px;
+      margin-bottom: 10px;   /* ← distanza dal bordo inferiore */
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+    }
+
+    .immersive-nav-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #c0392b;
+      background: #c0392b;
+      color: #ffffff;
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+      text-align: center;
+    }
+
+    .immersive-nav-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* TIMELINE STORICA – PERCORSO DIGITALE */
+
+    #timeline-wrapper {
+      overflow-y: auto;
+      padding: 0 4px 20px 4px;  /* padding simmetrico */
+      margin-top: 0;
+    }
+
+    .timeline-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .timeline-title-main {
+      font-size: 14px;
+      font-weight: bold;
+      color: #c0392b;
+      margin-bottom: 2px;
+    }
+
+    .timeline-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .timeline-card {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 10px 12px 10px;   /* chiude il beige più in alto */
+      margin-bottom: 10px;       /* bordo bianco esatto sotto lo specchietto */
+      position: relative;
+    }
+
+    .timeline-period-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .timeline-year {
+      font-size: 18px;
+      font-weight: bold;
+      color: #c0392b;
+      margin-bottom: 2px;
+    }
+
+    .timeline-period-title {
+      font-size: 13px;
+      font-style: italic;
+      color: #444;
+    }
+
+    .timeline-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 8px 0 6px 0;
+    }
+
+    .timeline-nav-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #c0392b;
+      background: #c0392b;
+      color: #ffffff;
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+      text-align: center;
+    }
+
+    .timeline-nav-btn:active {
+      transform: scale(0.97);
+    }
+
+    .timeline-body {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 6px;
+      background: #ffffff;
+      border-radius: 8px;
+      margin-top: 6px;
+    }
+
+    .timeline-content {
+      opacity: 1;
+      transition: opacity 0.25s ease;
+    }
+
+    .timeline-image-wrapper {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #d8d0c4;
+      background: #000;
+      margin-bottom: 6px;
+    }
+
+    #timeline-image {
+      display: block;
+      width: 100%;
+      height: auto;            /* immagine 1080x1920 intera, scrollando */
+      object-fit: contain;
+    }
+
+    .timeline-text {
+      font-size: 12px;
+      line-height: 1.25;
+      color: #444;
+      text-align: justify;
+    }
+
+    /* CONTENITORE GRANDE SCORRIBILE */
+    .timeline-scroll {
+      margin-top: 8px;
+      padding-right: 0px;
+      padding-bottom: 0;   /* niente fondo extra */
+    }
+
+    /* BLOCCO TESTO CON SCROLL INTERNO */
+    .timeline-text-box {
+      background: transparent;
+      border-radius: 0;
+      padding: 0 4px 0 0;
+      margin-top: 12px;       /* un filo più staccata dall’immagine */
+    }
+
+    /* COMMUNITY */
+
+    .community-header {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .community-header-icon {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 6px auto;
+    }
+
+    .community-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e8449;
+    }
+
+    .community-subtitle {
+      font-size: 11px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .community-board {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 8px 10px 10px;
+      margin-top: 8px;
+    }
+
+    .community-board-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .community-board-title {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: #1e8449;
+      color: #ffffff;
+      font-size: 12px;
+    }
+
+    .community-post {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 6px 0;
+      border-bottom: 1px solid #e1d8c7;
+    }
+
+    .community-post:last-child {
+      border-bottom: none;
+    }
+
+    .community-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+
+    .community-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .community-post-main {
+      flex: 1;
+      font-size: 11px;
+    }
+
+    .community-post-name {
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    .community-post-text {
+      font-style: italic;
+      color: #555;
+      line-height: 1.2;
+    }
+
+    .community-memories {
+      background: #f4f1ea;
+      border-radius: 12px;
+      border: 1px solid #d8d0c4;
+      padding: 8px 10px 10px;
+      margin-top: 10px;
+    }
+
+    .community-memories-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .community-memories-title {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #1e8449;
+      color: #ffffff;
+      font-size: 12px;
+    }
+
+    .community-memories-grid {
+      display: flex;
+      gap: 4px;
+    }
+
+    .community-memory-thumb {
+      flex: 1;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #d0c7b8;
+      background: #e0dbcf;
+      padding-bottom: 60%;
+      position: relative;
+    }
+
+    .community-memory-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .community-memory-thumb.community-memory-add {
+      background: #fdfaf4;
+      border: 1px dashed #1e8449;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .community-memory-plus {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1e8449;
+      line-height: 1;
+    }
+
+    .community-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .community-btn {
+      border-radius: 999px;
+      border: 1px solid #1e8449;
+      background: #1e8449;
+      color: #ffffff;
+      font-size: 13px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-family: "Times New Roman", serif;
+      text-align: center;
+    }
+
+    /* Animazione hover per ACCEDI / REGISTRATI */
+    .community-btn {
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .community-btn:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.25));
+    }
+
+    .community-btn.secondary {
+      background: #1e8449;
+      color: #ffffff;
+      border: 1px solid #1e8449;
+    }
+
+    .community-social {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .community-social-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    .community-social-icon {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .community-social-btn:hover .community-social-icon {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.25));
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- MODAL COMING SOON -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Coming soon...</div>
+      <img id="modal-image" class="modal-image" src="" alt="Chiesa selezionata">
+      <div class="modal-text">
+        Ci dispiace, la chiesa da te selezionata è ancora in fase di rilievo.
+      </div>
+      <button class="modal-btn" onclick="closeModal()">Ho Capito!</button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX GALLERY -->
+  <div id="gallery-overlay" class="gallery-overlay">
+    <div class="gallery-box">
+      <span class="gallery-close" onclick="closeGalleryViewer()">&times;</span>
+      <span class="gallery-prev" onclick="prevGalleryImage()">&#10094;</span>
+      <img id="gallery-viewer-img" src="" alt="Foto San Lorenzo">
+      <span class="gallery-next" onclick="nextGalleryImage()">&#10095;</span>
+    </div>
+  </div>
+
+  <div class="phone" id="phone">
+
+    <!-- Barra top -->
+    <div class="top-bar">
+      <span class="back-icon" onclick="handleBack()"></span>
+      <span class="search-icon" onclick="toggleSearch()"></span>
+    </div>
+
+    <!-- Barra di ricerca -->
+    <div class="search-wrapper">
+      <div class="search-inner">
+        <input id="search-bar" type="text" placeholder="Cerca...">
+        <span id="search-clear" class="search-clear">&times;</span>
+      </div>
+    </div>
+
+    <!-- Header principale -->
+    <div class="header">
+      <img src="icons/logo.png" class="logo-img" alt="TR-AVERSA">
+      <div class="logo-title">TR-AVERSA</div>
+    </div>
+
+    <!-- Intro Percorso Base -->
+    <div id="percorso-intro" class="percorso-intro-overlay">
+      <div class="percorso-intro-box">
+        <button class="percorso-intro-close" type="button" onclick="closePercorsoIntro()">&times;</button>
+        <div class="percorso-intro-title">Percorso base – 1h</div>
+        <div class="percorso-intro-text">
+          Un itinerario che ripercorre le tappe fondamentali della storia di Aversa: dalle origini longobarde e normanne
+          di San Lorenzo e San Biagio, attraverso le antiche porte urbiche e il castello svevo, fino ai luoghi simbolo
+          dello sviluppo religioso e civile della città, come San Paolo, Santa Croce e il quartiere Lemitone, per
+          concludere a Porta Napoli. Un viaggio essenziale per comprendere l’evoluzione urbana di Aversa.
+        </div>
+        <button class="percorso-intro-btn" type="button" onclick="startPercorsoBase()">Avvia percorso</button>
+      </div>
+    </div>
+
+    <div class="screens-wrapper">
+
+      <!-- HOME -->
+      <div id="home-screen" class="screen">
+        <div class="menu">
+
+          <div class="card-btn" onclick="openCatalog()">
+            <img src="icons/catalogo.jpg" class="icon-img" alt="">
+            <div class="text-zone">
+              <div class="card-title blue">Catalogo delle Chiese</div>
+              <div class="card-subtitle">
+                Schede, rilievi e dati storici<br>
+                delle chiese aversane.
+              </div>
+            </div>
+          </div>
+
+          <div class="card-btn" onclick="openInsitu()">
+            <img src="icons/percorso_insitu.jpg" class="icon-img" alt="">
+            <div class="text-zone">
+              <div class="card-title red">Percorso in situ</div>
+              <div class="card-subtitle">
+                Guida interattiva in tempo reale<br>
+                sul territorio.
+              </div>
+            </div>
+          </div>
+
+          <div class="card-btn" onclick="openDigital()">
+            <img src="icons/percorso_digitale.jpg" class="icon-img" alt="">
+            <div class="text-zone">
+              <div class="card-title red">Percorso digitale</div>
+              <div class="card-subtitle">
+                Un viaggio virtuale nella città<br>
+                delle cento chiese.
+              </div>
+            </div>
+          </div>
+
+          <div class="card-btn" onclick="openCommunity()">
+            <img src="icons/community.jpg" class="icon-img" alt="">
+            <div class="text-zone">
+              <div class="card-title green">Community</div>
+              <div class="card-subtitle">
+                Racconta la tua Aversa,<br>
+                condividi contenuti.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+<!-- MODAL FEEDBACK -->
+<div id="feedback-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Lascia un feedback</div>
+
+    <textarea
+      id="feedback-text"
+      class="feedback-textarea"
+      placeholder="Scrivi qui il tuo commento..."
+    ></textarea>
+
+    <button class="modal-btn" onclick="publishFeedback()">Pubblica</button>
+    <button class="modal-btn secondary" onclick="closeFeedbackModal()">Chiudi</button>
+  </div>
+</div>
+
+      <!-- CATALOGO -->
+      <div id="catalog-screen" class="screen">
+
+        <div class="catalog-header">
+          <img src="icons/catalogo.jpg" class="catalog-header-icon" alt="">
+          <div class="catalog-title">Catalogo delle Chiese</div>
+          <div class="catalog-subtitle">
+            Schede, rilievi e dati storici delle chiese aversane.
+          </div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-alfabetico" onclick="showCatalogTab('alfabetico')">
+            Ordine alfabetico
+          </button>
+          <button class="tab-btn" id="tab-periodo" onclick="showCatalogTab('periodo')">
+            Periodo storico
+          </button>
+          <button class="tab-btn" id="tab-inaccessibili" onclick="showCatalogTab('inaccessibili')">
+            Inaccessibili
+          </button>
+        </div>
+
+        <!-- LISTA ORDINE ALFABETICO -->
+        <div class="catalog-list" id="list-alfabetico"></div>
+
+        <!-- PERIODO STORICO -->
+        <div class="catalog-list" id="list-periodo" style="display:none;">
+          <div class="period-choices" id="period-choices">
+            <div class="period-card" data-period="medioevale" onclick="openPeriodo('medioevale')">
+              <div class="period-icon"></div>
+              <div class="period-text">
+                <div class="period-title">Chiese Medioevali</div>
+                <div class="period-subtitle">V – XV secolo</div>
+              </div>
+            </div>
+
+            <div class="period-card" data-period="rinascimentale" onclick="openPeriodo('rinascimentale')">
+              <div class="period-icon"></div>
+              <div class="period-text">
+                <div class="period-title">Chiese Rinascimentali</div>
+                <div class="period-subtitle">XV – XVI secolo</div>
+              </div>
+            </div>
+
+            <div class="period-card" data-period="barocca" onclick="openPeriodo('barocca')">
+              <div class="period-icon"></div>
+              <div class="period-text">
+                <div class="period-title">Chiese Barocche</div>
+                <div class="period-subtitle">XVII – XVIII secolo</div>
+              </div>
+            </div>
+
+            <div class="period-card" data-period="contemporanea" onclick="openPeriodo('contemporanea')">
+              <div class="period-icon"></div>
+              <div class="period-text">
+                <div class="period-title">Chiese Contemporanee</div>
+                <div class="period-subtitle">XIX – XXI secolo</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="period-results" id="period-results">
+            <div class="period-back" onclick="closePeriodo()">← Torna ai periodi</div>
+            <div class="period-list-container" id="period-list"></div>
+          </div>
+        </div>
+
+        <!-- INACCESSIBILI -->
+        <div class="catalog-list" id="list-inaccessibili" style="display:none;"></div>
+
+      </div>
+
+      <!-- PERCORSO IN SITU -->
+      <div id="insitu-screen" class="screen">
+
+        <div class="insitu-header">
+          <img src="icons/percorso_insitu.jpg" class="insitu-header-icon" alt="">
+          <div class="insitu-title">Percorso in situ</div>
+          <div class="insitu-subtitle">Guida interattiva in tempo reale</div>
+        </div>
+
+        <div class="insitu-tabs">
+          <button class="insitu-tab-btn active" id="insitu-tab-durata" onclick="showInsituTab('durata')">
+            Durata
+          </button>
+          <button class="insitu-tab-btn" id="insitu-tab-tipologia" onclick="showInsituTab('tipologia')">
+            Tipologia
+          </button>
+          <button class="insitu-tab-btn" id="insitu-tab-personalizzato" onclick="showInsituTab('personalizzato')">
+            Personalizzato
+          </button>
+        </div>
+
+        <!-- DURATA -->
+        <div class="insitu-list" id="insitu-list-durata">
+          <div class="insitu-card" style="cursor:pointer;" onclick="openPercorsoBase()">
+            <div class="insitu-icon" style="background-image:url('icons/base.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Base – 1h</div>
+              <div class="insitu-desc">Schede brevi, audio-guide e immagini.</div>
+            </div>
+          </div>
+
+          <div class="insitu-card">
+            <div class="insitu-icon" style="background-image:url('icons/avanzato.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Avanzato – 1h 30 min</div>
+              <div class="insitu-desc">Accesso ai rilievi, fonti storiche e mappe.</div>
+            </div>
+          </div>
+
+          <div class="insitu-card">
+            <div class="insitu-icon" style="background-image:url('icons/interattivo.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Interattivo – 2h</div>
+              <div class="insitu-desc">Con quiz, realtà aumentata o panoramiche 360°.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIPOLOGIA -->
+        <div class="insitu-list" id="insitu-list-tipologia" style="display:none;">
+          <div class="insitu-card">
+            <div class="insitu-icon" style="background-image:url('icons/evoluzione_urbana.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Evoluzione Urbana</div>
+              <div class="insitu-desc">Dall’origine normanna alla città contemporanea.</div>
+            </div>
+          </div>
+
+          <div class="insitu-card">
+            <div class="insitu-icon" style="background-image:url('icons/periodo_storico.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Periodo Storico</div>
+              <div class="insitu-desc">Dal Medioevo al Barocco: esplora le fasi evolutive di Aversa.</div>
+            </div>
+          </div>
+
+          <div class="insitu-card">
+            <div class="insitu-icon" style="background-image:url('icons/chiese_inaccessibili.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Chiese Inaccessibili</div>
+              <div class="insitu-desc">Scopri gli edifici non più visitabili grazie alla ricostruzione virtuale.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PERSONALIZZATO -->
+        <div class="insitu-list" id="insitu-list-personalizzato" style="display:none;">
+
+          <!-- Card principale per aprire il builder -->
+          <div class="insitu-card" onclick="startNewRoute()" style="cursor:pointer;">
+            <div class="insitu-icon" style="background-image:url('icons/personalizzato.jpg');"></div>
+            <div class="insitu-text">
+              <div class="insitu-main">Personalizza il tuo percorso</div>
+              <div class="insitu-desc">Seleziona le chiese e crea il tuo itinerario.</div>
+            </div>
+          </div>
+
+          <!-- Builder dinamico -->
+          <div class="personalizza-builder" id="route-builder" style="display:none;">
+            <div class="personalizza-builder-title">Seleziona le chiese</div>
+            <div class="builder-subtitle">
+              Scegli una o più chiese dall’elenco, poi assegna un nome al percorso.
+            </div>
+
+            <div class="builder-list" id="route-builder-list"></div>
+
+            <div class="builder-name-row">
+              <label for="route-name-input">Nome percorso:</label>
+              <input id="route-name-input" type="text" placeholder="Es. Percorso centro storico">
+            </div>
+
+            <div class="builder-actions">
+              <button class="btn-small secondary" type="button" onclick="cancelRouteBuilder()">Annulla</button>
+              <button class="btn-small" type="button" onclick="saveRoute()">Salva</button>
+            </div>
+          </div>
+
+          <!-- Lista percorsi salvati -->
+          <div class="saved-routes-list" id="saved-routes-list"></div>
+        </div>
+      </div>
+
+       <!-- PERCORSO DIGITALE -->
+      <div id="digital-screen" class="screen">
+        <div class="digital-header">
+          <img src="icons/percorso_digitale.jpg" class="digital-header-icon" alt="">
+          <div class="digital-title">Percorso Digitale</div>
+          <div class="digital-subtitle">Un viaggio virtuale nella città delle cento chiese.</div>
+        </div>
+
+        <div class="digital-menu-label">Menù Utente</div>
+
+        <!-- LISTA DELLE TRE CARD -->
+        <div class="digital-list">
+          <!-- CARD: ESPLORAZIONE 3D -->
+          <div class="digital-card" onclick="open3DExplorer()">
+            <div class="digital-icon" style="background-image:url('icons/esplorazione_3d.jpg');"></div>
+            <div class="digital-text">
+              <div class="digital-main">Esplorazione 3D</div>
+              <div class="digital-desc">Naviga nella storia di Aversa.</div>
+            </div>
+          </div>
+
+          <!-- CARD: TIMELINE STORICA -->
+          <div class="digital-card" onclick="openTimeline()">
+            <div class="digital-icon" style="background-image:url('icons/timeline_storica.jpg');"></div>
+            <div class="digital-text">
+              <div class="digital-main">Timeline Storica</div>
+              <div class="digital-desc">
+                Scopri l’evoluzione urbana e architettonica di Aversa nel tempo.
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD: RICOSTRUZIONI IMMERSIVE -->
+          <div class="digital-card" onclick="openImmersive()">
+            <div class="digital-icon" style="background-image:url('icons/ricostruzioni_immersive.jpg');"></div>
+            <div class="digital-text">
+              <div class="digital-main">Ricostruzioni Immersive</div>
+              <div class="digital-desc">
+                Entra virtualmente nelle chiese inaccessibili e vivi la loro storia.
+              </div>
+            </div>
+          </div>
+        </div> <!-- fine digital-list -->
+
+        <!-- RICOSTRUZIONI IMMERSIVE — LISTA CHIESE -->
+        <div id="immersive-list" class="digital-section" style="display:none; margin-top:6px;">
+
+          <div class="digital-header">
+            <img src="icons/ricostruzioni_immersive.jpg" class="digital-header-icon" alt="">
+            <div class="digital-title">Ricostruzioni Immersive</div>
+            <div class="digital-subtitle">
+              Chiese ricostruite in 3D e non più accessibili.
+            </div>
+          </div>
+
+          <div id="immersive-churches" class="catalog-list"></div>
+        </div>
+
+        <!-- MODULO SAN LORENZO – RICOSTRUZIONI IMMERSIVE -->
+        <div id="immersive-sanlorenzo-wrapper" style="display:none; margin-top:6px;">
+
+          <div class="explore-3d-header">
+            <div class="explore-3d-title">San Lorenzo – Ricostruzione immersiva</div>
+            <div class="digital-subtitle">
+              Naviga nella chiesa di San Lorenzo
+            </div>
+          </div>
+
+          <div id="sanlorenzo-pano-box" class="immersive-panobox">
+            <div class="immersive-panobox-header" onclick="toggleSanLorenzoBox()">
+              <div class="immersive-panobox-header-title">
+                Panoramiche disponibili (44)
+              </div>
+              <div id="sanlorenzo-pano-toggle-icon" class="immersive-panobox-toggle-icon">▲</div>
+            </div>
+            <div id="sanlorenzo-pano-body" class="immersive-panobox-body">
+              <!-- gruppi e pulsanti panoramiche inseriti via JavaScript -->
+            </div>
+          </div>
+
+          <div id="sanlorenzo-panorama"
+               style="width:100%; height:330px; border-radius:10px; overflow:hidden; border:1px solid #d8d0c4; margin-top:4px;">
+          </div>
+
+          <div class="immersive-panorama-nav">
+            <button type="button" class="immersive-nav-btn" onclick="sanLorenzoPrevPano()">
+              ← Panoramica precedente
+            </button>
+            <button type="button" class="immersive-nav-btn" onclick="sanLorenzoNextPano()">
+              Panoramica successiva →
+            </button>
+          </div>
+
+        </div>
+
+        <!-- MODULO ESPLORAZIONE 3D – TAPPE STREET VIEW -->
+        <div id="explore-3d-wrapper" class="digital-section" style="display:none; margin-top:4px;">
+
+          <div class="explore-3d-header">
+            <div class="explore-3d-title">Esplorazione 3D</div>
+            <div class="digital-subtitle">
+              Percorso virtuale attraverso le tappe principali della città.
+            </div>
+          </div>
+
+          <div class="explore-3d-stop-title" id="explore-3d-stop-title"></div>
+
+          <div class="explore-3d-nav">
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(0)">1. San Lorenzo</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(1)">2. San Biagio</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(2)">3. Porta San Giovanni</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(3)">4. Castello Normanno Svevo</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(4)">5. Cattedrale di San Paolo</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(5)">6. Quartiere Lemitone</button>
+            <button type="button" class="explore-3d-btn" onclick="change3DStop(6)">7. Porta Napoli</button>
+          </div>
+
+          <div class="explore-3d-frame-wrapper">
+            <iframe
+              id="streetview-frame"
+              src=""
+              loading="lazy"
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
+
+        </div>
+
+        <!-- MODULO TIMELINE STORICA -->
+        <div id="timeline-wrapper" class="timeline-wrapper digital-section" style="display:none; margin-top:6px;">
+
+          <div class="timeline-header">
+            <div class="timeline-title-main">Timeline storica – Evoluzione urbana</div>
+            <div class="timeline-subtitle">
+              Segui le principali fasi di crescita della città di Aversa.
+            </div>
+          </div>
+
+          <div class="timeline-card">
+            <div class="timeline-period-header">
+              <div id="timeline-year" class="timeline-year"></div>
+              <div id="timeline-period-title" class="timeline-period-title"></div>
+            </div>
+
+            <div class="timeline-nav">
+              <button type="button" class="timeline-nav-btn" onclick="prevTimelinePeriod()">
+                ← Periodo precedente
+              </button>
+              <button type="button" class="timeline-nav-btn" onclick="nextTimelinePeriod()">
+                Periodo successivo →
+              </button>
+            </div>
+
+        <!-- CONTENITORE SCORRIBILE PRINCIPALE -->
+        <div id="timeline-content" class="timeline-content">
+          <div class="timeline-scroll">
+
+            <!-- IMMAGINE (si vede tutta scrollando) -->
+            <div class="timeline-image-wrapper">
+              <img id="timeline-image" src="" alt="Evoluzione urbana di Aversa">
+            </div>
+
+            <!-- TESTO (scroll interno quando supera l'altezza massima) -->
+            <div class="timeline-text-box">
+              <div id="timeline-text" class="timeline-text"></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+      </div> <!-- fine #digital-screen -->
+
+      <!-- COMMUNITY -->
+      <div id="community-screen" class="screen">
+
+        <div class="community-header">
+          <img src="icons/community_header.png" class="community-header-icon" alt="">
+          <div class="community-title">Community</div>
+          <div class="community-subtitle">Racconta la tua Aversa</div>
+        </div>
+
+        <div class="community-board">
+          <div class="community-board-header">
+            <span class="community-board-title">Bacheca community</span>
+          </div>
+
+          <div class="community-post">
+            <div class="community-avatar">
+              <img src="icons/community/sofia.jpg" alt="">
+            </div>
+            <div class="community-post-main">
+              <div class="community-post-name">Sara Martino</div>
+              <div class="community-post-text">
+                "Finalmente un'app che unisce storia e tecnologia in modo così coinvolgente! L'interfaccia è pulita e mi ha invogliata a scoprire angoli di Aversa che non conoscevo."
+              </div>
+            </div>
+          </div>
+
+          <div class="community-post">
+            <div class="community-avatar">
+              <img src="icons/community/marco.jpg" alt="">
+            </div>
+            <div class="community-post-main">
+              <div class="community-post-name">Vincenzo Barone</div>
+              <div class="community-post-text">
+                "La ricostruzione virtuale di San Lorenzo è mozzafiato. Sembra di essere davvero lì! Mi piacerebbe molto vederla dal vivo un giorno."
+              </div>
+            </div>
+          </div>
+
+          <div class="community-post">
+            <div class="community-avatar">
+              <img src="icons/community/sara.jpg" alt="">
+            </div>
+            <div class="community-post-main">
+              <div class="community-post-name">Iole Coronella</div>
+              <div class="community-post-text">
+                "Mio nonno, quando era ragazzo, mi raccontava che andava a nascondersi nel chiostro di San Francesco durante i giochi. Rivivere quei luoghi, anche se virtualmente, è un'emozione unica."
+              </div>
+            </div>
+          </div>
+
+          <div class="community-post">
+            <div class="community-avatar">
+              <img src="icons/community/luigi.jpg" alt="">
+            </div>
+            <div class="community-post-main">
+              <div class="community-post-name">Rosy Turco</div>
+              <div class="community-post-text">
+                "Aversa ha un patrimonio architettonico incredibile. Spero che iniziative come questa aiutino a valorizzarlo e a renderlo accessibile a tutti."
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottone FEEDBACK tra bacheca e memorie -->
+        <button
+          type="button"
+          class="community-btn secondary"
+          style="margin-top: 10px; width: 100%;"
+          onclick="openFeedbackModal()">
+          Lascia un Feedback!
+        </button>
+
+        <div class="community-memories">
+          <div class="community-memories-header">
+            <span class="community-memories-title">Memorie degli abitanti</span>
+          </div>
+
+          <div class="community-memories-grid">
+            <!-- Riquadro + a sinistra -->
+            <div class="community-memory-thumb community-memory-add" onclick="openMemoryPicker()">
+              <span class="community-memory-plus">+</span>
+            </div>
+
+            <!-- Foto esistenti -->
+            <div class="community-memory-thumb">
+              <img src="icons/community/memoria1.jpg" alt="">
+            </div>
+            <div class="community-memory-thumb">
+              <img src="icons/community/memoria2.jpg" alt="">
+            </div>
+            <div class="community-memory-thumb">
+              <img src="icons/community/memoria3.jpg" alt="">
+            </div>
+          </div>
+
+          <!-- Input nascosto per selezionare/scattare una foto -->
+          <input id="memory-upload" type="file" accept="image/*" capture="environment" style="display:none;">
+        </div>
+
+        <div class="community-actions">
+          <button type="button" class="community-btn">Accedi / Registrati</button>
+
+          <div class="community-social">
+            <div class="community-social-btn">
+              <img src="icons/community/facebook.png" alt="Facebook" class="community-social-icon">
+            </div>
+            <div class="community-social-btn">
+              <img src="icons/community/instagram.png" alt="Instagram" class="community-social-icon">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+<!-- DETTAGLIO SAN LORENZO -->
+      <div id="detail-screen" class="screen">
+        <div class="detail-header-card">
+          <div class="detail-thumb" style="background-image:url('icons/chiese/chiesa_san_lorenzo_ad_septimum.jpg');"></div>
+          <div class="detail-header-text">
+            <div class="detail-header-name">Chiesa di San Lorenzo</div>
+            <div class="detail-header-address">Via S. Lorenzo, 45</div>
+          </div>
+        </div>
+
+        <div class="detail-tabs">
+          <button class="detail-tab-btn active" id="tab-storia" onclick="showDetailTab('storia')">Storia</button>
+          <button class="detail-tab-btn" id="tab-rilievo" onclick="showDetailTab('rilievo')">Rilievo</button>
+          <button class="detail-tab-btn" id="tab-gallery" onclick="showDetailTab('gallery')">Gallery</button>
+        </div>
+
+        <div class="detail-body">
+          <!-- STORIA -->
+          <div id="detail-storia" class="detail-section active">
+            <div class="detail-text-block">
+              <h3>Origini e contesto antico</h3>
+              <p>
+                San Lorenzo ad Septimum nasce lungo l’antica Via Campana, al settimo miglio da Capua,
+                in un’area già frequentata in età romana, dove probabilmente sorgeva una <i>statio</i> consolare.
+                Tra tardo antico e alto medioevo il sito assume valore cristiano, testimoniato da sepolture
+                longobarde, molto prima della fondazione della città di Aversa.
+              </p>
+
+              <h3>La fondazione altomedievale</h3>
+              <p>
+                L’abbazia viene istituita nell’850 dai longobardi di Capua, quando Aversa ancora non esisteva.
+                Il complesso rappresenta quindi uno dei primi poli religiosi e territoriali dell’area, attorno al
+                quale si svilupperà, due secoli dopo, il nuovo insediamento normanno.
+              </p>
+
+              <h3>Il rapporto con la nascita di Aversa</h3>
+              <p>
+                Con il 1030 e la fondazione della città normanna, organizzata con impianto radiocentrico,
+                San Lorenzo entra nella rete dei poteri religiosi e civili del territorio, mantenendo un ruolo
+                strategico nella struttura urbana e nella vita politica della nascente comunità.
+              </p>
+
+              <h3>La chiesa medievale</h3>
+              <p>
+                L’edificio originario presentava una basilica a tre navate con terminazione triabsidata,
+                facciata a capanna con nartece e rosone, affiancata da un chiostro medievale oggi perduto.
+              </p>
+
+              <h3>Ricostruzioni e trasformazioni</h3>
+              <p>
+                Il sisma del 1456 danneggiò gravemente la chiesa. Dal 1513, con l’ingresso nella congregazione
+                cassinese, iniziò una vasta ricostruzione: aggiunta di cappelle laterali, nuovo campanile,
+                realizzazione del chiostro maggiore “toscano” e del chiostro minore rinascimentale. Le colonne
+                normanne furono inglobate in pilastri barocchi.
+              </p>
+
+              <h3>Architettura e stratificazioni interne</h3>
+              <p>
+                All’interno convivono le principali fasi storiche: l’impianto normanno, il presbiterio medievale
+                rialzato, la copertura lignea barocca della navata centrale (1706–1707) e la volta a botte
+                affrescata del presbiterio. Sono presenti anche resti di pavimento cosmatesco e molteplici
+                tessiture murarie che documentano secoli di evoluzioni.
+              </p>
+
+              <h3>San Lorenzo oggi</h3>
+              <p>
+                Oggi l’abbazia è inglobata nel tessuto urbano di Aversa, lungo via San Lorenzo. La chiesa resta
+                luogo di culto attivo, mentre il chiostro maggiore ospita la Facoltà di Architettura, mantenendo
+                vivo il ruolo religioso, culturale e formativo del complesso.
+              </p>
+            </div>
+          </div>
+
+          <!-- RILIEVO: SOLO AUDIOGUIDA -->
+          <div id="detail-rilievo" class="detail-section">
+            <div class="video-wrapper">
+              <video id="rilievo-video" src="icons/rilievo/presentazione_sanlorenzo.mp4"></video>
+
+              <div class="video-controls" id="video-controls">
+                <div class="left-controls">
+                  <button class="icon-btn" id="volume-btn">🎧</button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0.8"
+                    id="volume-slider"
+                    class="volume-slider"
+                  >
+                </div>
+
+                <button class="icon-btn" id="play-btn" onclick="togglePlay()">▶</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GALLERY -->
+          <div id="detail-gallery" class="detail-section">
+            <div class="gallery-grid" id="gallery-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERCORSO BASE – 1h -->
+      <div id="percorso-base-screen" class="screen">
+        <div class="detail-header-card">
+          <div class="detail-header-text">
+            <div class="detail-header-name">Percorso base – 1h</div>
+            <div class="detail-header-address">San Lorenzo · San Biagio · Porta S. Giovanni · Castello Normanno Svevo · San Paolo · Santa Croce · Quartiere Lemitone · Porta Napoli</div>
+          </div>
+        </div>
+
+        <div class="detail-body">
+          <!-- MAPPA -->
+          <div class="percorso-base-map-wrapper">
+            <img src="icons/mappe/percorso_base.jpg"
+                 alt="Mappa percorso base"
+                 style="display:block; width:100%; height:auto;">
+
+            <!-- Punti tappa: posizionati sulle coordinate reali -->
+            <button class="stop-marker" data-stop="0" style="top:5.9%; left:20.3%;">1</button>
+            <button class="stop-marker" data-stop="1" style="top:32.5%; left:39.8%;">2</button>
+            <button class="stop-marker" data-stop="2" style="top:34.2%; left:21.3%;">3</button>
+            <button class="stop-marker" data-stop="3" style="top:42.5%; left:65.5%;">4</button>
+            <button class="stop-marker" data-stop="4" style="top:55.7%; left:53.9%;">5</button>
+            <button class="stop-marker" data-stop="5" style="top:61.7%; left:47.8%;">6</button>
+            <button class="stop-marker" data-stop="6" style="top:91.5%; left:83.0%;">7</button>
+            <button class="stop-marker" data-stop="7" style="top:96.8%; left:94.0%;">8</button>
+          </div>
+
+          <!-- PANNELLO TAPPA -->
+          <div style="background:#f4f1ea; border-radius:10px; border:1px solid #d8d0c4; padding:8px;">
+            <div id="stop-title" style="font-weight:bold; font-size:13px; margin-bottom:4px;"></div>
+
+            <img id="stop-image"
+                 src=""
+                 alt=""
+                 style="width:100%; border-radius:8px; margin-bottom:6px; display:none; max-height:180px; object-fit:cover;">
+
+            <div id="stop-text"
+                 style="font-size:11px; font-style:italic; color:#666; margin-bottom:6px;"></div>
+
+            <audio id="stop-audio"></audio>
+
+            <div class="stop-controls">
+              <div class="stop-controls-left">
+                <button class="icon-btn" type="button" id="stop-volume-btn">🎧</button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.8"
+                  id="stop-volume-slider"
+                  class="volume-slider">
+              </div>
+
+              <button class="icon-btn" type="button" id="stop-play-btn" onclick="toggleStopAudio()">▶</button>
+              <button class="icon-btn" type="button" onclick="nextStop()">Prosegui →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentPeriodo = null;
+    let searchIsOpen = false;
+    let detailOpen = false;
+    let baseOpen = false;
+    let lastVolume = 0.8;
+    let stopIsPlaying = false;
+
+    let sanLorenzoViewer = null;
+    let sanLorenzoBoxOpen = false;
+    let currentSanLorenzoIndex = 0;   // indice panoramica corrente
+
+    // Stato percorsi personalizzati
+    let customRoutes = [];
+    let currentEditingRouteId = null;
+    let sortedChieseForRoutes = [];
+
+    /* DATI CHIESE */
+    const chiese = [
+      {
+        nome: "Cattedrale di San Paolo (Duomo)",
+        indirizzo: "Piazza Duomo",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/cattedrale_san_paolo.jpg"
+      },
+      {
+        nome: "Chiesa dei SS. Filippo e Giacomo",
+        indirizzo: "Via Roma",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_ss_filippo_giacomo.jpg"
+      },
+      {
+        nome: "Chiesa di San Biagio (Monastero di San Biagio)",
+        indirizzo: "Via San Biagio",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_san_biagio.jpg"
+      },
+      {
+        nome: "Chiesa di San Lorenzo ad Septimum",
+        indirizzo: "Via S. Lorenzo, 45",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_lorenzo_ad_septimum.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Marta Maggiore",
+        indirizzo: "Via Santa Marta",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_marta_maggiore.jpg"
+      },
+      {
+        nome: "Chiesa di San Sossio",
+        indirizzo: "Via Sossio",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_san_sossio.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Croce",
+        indirizzo: "Via Santa Croce",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_croce.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria a Piazza",
+        indirizzo: "Piazza Santa Maria a Piazza",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_a_piazza.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria la Nova",
+        indirizzo: "Via San Biagio",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_la_nova.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria del Popolo",
+        indirizzo: "Via Castello",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_maria_del_popolo.jpg"
+      },
+      {
+        nome: "Chiesa di Sant’Andrea Apostolo",
+        indirizzo: "Vico Sant’Andrea",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_sant_andrea_apostolo.jpg"
+      },
+      {
+        nome: "Chiesa di San Agostino",
+        indirizzo: "Via Sant’Agostino",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_agostino.jpg"
+      },
+      {
+        nome: "Chiesa di Santo Spirito",
+        indirizzo: "Via Spirito Santo",
+        periodo: "medioevale",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santo_spirito.jpg"
+      },
+      {
+        nome: "Monastero benedettino femminile di San Paolo",
+        indirizzo: "Via San Paolo",
+        periodo: "medioevale",
+        stato: "in_uso",
+        img: "icons/chiese/monastero_benedettino_femminile_san_paolo.jpg"
+      },
+      {
+        nome: "Chiesa di San Rocco",
+        indirizzo: "Via Sant’Andrea",
+        periodo: "rinascimentale",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_rocco.jpg"
+      },
+      {
+        nome: "Cappella di San Giuseppe",
+        indirizzo: "Piazza Savignano",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/cappella_san_giuseppe.jpg"
+      },
+      {
+        nome: "Cappella di Sant’Antonio da Padova",
+        indirizzo: "Via Armando Diaz",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/cappella_sant_antonio_da_padova.jpg"
+      },
+      {
+        nome: "Chiesa dell’Annunziata (Arco dell'Annunziata)",
+        indirizzo: "Via Roma / Arco dell’Annunziata",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_annunziata.jpg"
+      },
+      {
+        nome: "Chiesa dell’Immacolata",
+        indirizzo: "Via Gramsci",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_immacolata.jpg"
+      },
+      {
+        nome: "Chiesa della Madonna delle Grazie alle Fontane",
+        indirizzo: "Via Fontane Vecchie",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_madonna_grazie_fontane.jpg"
+      },
+      {
+        nome: "Chiesa della Madonna del Pozzo",
+        indirizzo: "Via Pozzo Vecchio",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_madonna_pozzo.jpg"
+      },
+      {
+        nome: "Chiesa della Rotonda (SS. Trinità)",
+        indirizzo: "Via SS. Trinità",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_rotonda.jpg"
+      },
+      {
+        nome: "Chiesa delle Cappuccinelle (Convento/Chiesa)",
+        indirizzo: "Via Cappuccinelle",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_cappuccinelle.jpg"
+      },
+      {
+        nome: "Convento/Chiesa delle Cappuccinelle",
+        indirizzo: "Via Cappuccinelle",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/convento_cappuccinelle.jpg"
+      },
+      {
+        nome: "Chiesa delle Liguarine",
+        indirizzo: "Via Liguorini",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_liguarine.jpg"
+      },
+      {
+        nome: "Chiesa di San Bartolomeo",
+        indirizzo: "Via Vittorio Emanuele III",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_bartolomeo.jpg"
+      },
+      {
+        nome: "Chiesa di San Francesco",
+        indirizzo: "Via San Francesco",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_francesco.jpg"
+      },
+      {
+        nome: "Chiesa e Monastero di San Francesco",
+        indirizzo: "Via San Francesco",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_monastero_san_francesco.jpg"
+      },
+      {
+        nome: "Chiesa di San Giovanni Evangelista",
+        indirizzo: "Via San Giovanni",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_giovanni_evangelista.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Lucia e Convento",
+        indirizzo: "Via Santa Lucia",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_lucia.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria Assunta nelle Cappuccinelle",
+        indirizzo: "Via Castello",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_maria_assunta_cappuccinelle.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria Costantinopoli",
+        indirizzo: "Via Costantinopoli",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_costantinopoli.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria degli Angeli",
+        indirizzo: "Via Di Giacomo",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_angeli.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria della Pietà",
+        indirizzo: "Piazza Vittorio Emanuele III",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_pieta.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria delle Grazie",
+        indirizzo: "Strada San Giovanni",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_grazie.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria di Montevergine",
+        indirizzo: "Via Vittorio Emanuele",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_maria_montevergine.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Maria Succurre Miseris",
+        indirizzo: "Via Succurre Miseris",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_maria_succurre_miseris.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Marta Minore",
+        indirizzo: "Via Santa Martella",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_santa_marta_minore.jpg"
+      },
+      {
+        nome: "Chiesa di San Sebastiano",
+        indirizzo: "Via San Sebastiano",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_san_sebastiano.jpg"
+      },
+      {
+        nome: "Chiesa dello Spirito Santo",
+        indirizzo: "Vico Spirito Santo",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_spirito_santo.jpg"
+      },
+      {
+        nome: "Convento di Sant’Anna e Chiesa",
+        indirizzo: "Piazza Crispi",
+        periodo: "barocca",
+        stato: "in_uso",
+        img: "icons/chiese/convento_sant_anna.jpg"
+      },
+      {
+        nome: "Chiesa di Sant’Anna al Carminiello",
+        indirizzo: "Via Di Giacomo",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_sant_anna_carminiello.jpg"
+      },
+      {
+        nome: "Chiesa di Sant’Antonio Abate",
+        indirizzo: "Via Sant’Antonio Abate",
+        periodo: "barocca",
+        stato: "disuso",
+        img: "icons/chiese/chiesa_sant_antonio_abate.jpg"
+      },
+      {
+        nome: "Chiesa di San Ciro",
+        indirizzo: "Via San Ciro",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_ciro.jpg"
+      },
+      {
+        nome: "Chiesa di San Giuseppe Operaio",
+        indirizzo: "Via Filippo Saporito",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_giuseppe_operaio.jpg"
+      },
+      {
+        nome: "Chiesa di San Giuseppe Operaio (Via Caruso)",
+        indirizzo: "Via Enrico Caruso",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_giuseppe_operaio_via_caruso.jpg"
+      },
+      {
+        nome: "Chiesa di San Michele Arcangelo (Ferrovia)",
+        indirizzo: "Via Armando Diaz / Via E. Fermi",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_san_michele_arcangelo.jpg"
+      },
+      {
+        nome: "Chiesa di Santa Teresina del Gesù Bambino",
+        indirizzo: "Via Luca Giordano",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_santa_teresina_gesu_bambino.jpg"
+      },
+      {
+        nome: "Chiesa/Mensa del Monastero Benedettino (Maschi)",
+        indirizzo: "Via San Paolo",
+        periodo: "contemporanea",
+        stato: "in_uso",
+        img: "icons/chiese/chiesa_mensa_monastero_benedettino.jpg"
+      }
+    ];
+
+    const sanLorenzoGroups = [
+      {
+        id: "presbiterio",
+        label: "Presbiterio",
+        panoramas: [
+          { id: "presbiterio_1", label: "Presbiterio 1", img: "icons/panoramiche/Presbiterio_1.jpg" },
+          { id: "presbiterio_2", label: "Presbiterio 2", img: "icons/panoramiche/Presbiterio_2.jpg" },
+          { id: "presbiterio_3", label: "Presbiterio 3", img: "icons/panoramiche/Presbiterio_3.jpg" },
+          { id: "presbiterio_4", label: "Presbiterio 4", img: "icons/panoramiche/Presbiterio_4.jpg" },
+          { id: "presbiterio_5", label: "Presbiterio 5", img: "icons/panoramiche/Presbiterio_5.jpg" },
+          { id: "presbiterio_6", label: "Presbiterio 6", img: "icons/panoramiche/Presbiterio_6.jpg" }
+        ]
+      },
+      {
+        id: "navata_principale",
+        label: "Navata principale",
+        panoramas: [
+          { id: "navata_principale_1", label: "Navata principale 1", img: "icons/panoramiche/Navata_Principale_1.jpg" },
+          { id: "navata_principale_2", label: "Navata principale 2", img: "icons/panoramiche/Navata_Principale_2.jpg" },
+          { id: "navata_principale_3", label: "Navata principale 3", img: "icons/panoramiche/Navata_Principale_3.jpg" },
+          { id: "navata_principale_4", label: "Navata principale 4", img: "icons/panoramiche/Navata_Principale_4.jpg" },
+          { id: "navata_principale_5", label: "Navata principale 5", img: "icons/panoramiche/Navata_Principale_5.jpg" },
+          { id: "navata_principale_6", label: "Navata principale 6", img: "icons/panoramiche/Navata_Principale_6.jpg" },
+          { id: "navata_principale_7", label: "Navata principale 7", img: "icons/panoramiche/Navata_Principale_7.jpg" },
+          { id: "navata_principale_8", label: "Navata principale 8", img: "icons/panoramiche/Navata_Principale_8.jpg" },
+          { id: "navata_principale_9", label: "Navata principale 9", img: "icons/panoramiche/Navata_Principale_9.jpg" }
+        ]
+      },
+      {
+        id: "navata_sinistra",
+        label: "Navata sinistra",
+        panoramas: [
+          { id: "navata_sinistra_1", label: "Navata sinistra 1", img: "icons/panoramiche/Navata_Sinistra_1.jpg" },
+          { id: "navata_sinistra_2", label: "Navata sinistra 2", img: "icons/panoramiche/Navata_Sinistra_2.jpg" },
+          { id: "navata_sinistra_3", label: "Navata sinistra 3", img: "icons/panoramiche/Navata_Sinistra_3.jpg" },
+          { id: "navata_sinistra_4", label: "Navata sinistra 4", img: "icons/panoramiche/Navata_Sinistra_4.jpg" },
+          { id: "navata_sinistra_5", label: "Navata sinistra 5", img: "icons/panoramiche/Navata_Sinistra_5.jpg" },
+          { id: "navata_sinistra_6", label: "Navata sinistra 6", img: "icons/panoramiche/Navata_Sinistra_6.jpg" },
+          { id: "navata_sinistra_7", label: "Navata sinistra 7", img: "icons/panoramiche/Navata_Sinistra_7.jpg" }
+        ]
+      },
+      {
+        id: "navata_destra",
+        label: "Navata destra",
+        panoramas: [
+          { id: "navata_destra_1", label: "Navata destra 1", img: "icons/panoramiche/Navata_Destra_1.jpg" },
+          { id: "navata_destra_2", label: "Navata destra 2", img: "icons/panoramiche/Navata_Destra_2.jpg" },
+          { id: "navata_destra_3", label: "Navata destra 3", img: "icons/panoramiche/Navata_Destra_3.jpg" },
+          { id: "navata_destra_4", label: "Navata destra 4", img: "icons/panoramiche/Navata_Destra_4.jpg" },
+          { id: "navata_destra_5", label: "Navata destra 5", img: "icons/panoramiche/Navata_Destra_5.jpg" },
+          { id: "navata_destra_6", label: "Navata destra 6", img: "icons/panoramiche/Navata_Destra_6.jpg" },
+          { id: "navata_destra_7", label: "Navata destra 7", img: "icons/panoramiche/Navata_Destra_7.jpg" }
+        ]
+      },
+      {
+        id: "sagrestia",
+        label: "Sagrestia",
+        panoramas: [
+          { id: "sagrestia_1", label: "Sagrestia 1", img: "icons/panoramiche/Sagrestia_1.jpg" },
+          { id: "sagrestia_2", label: "Sagrestia 2", img: "icons/panoramiche/Sagrestia_2.jpg" },
+          { id: "sagrestia_3", label: "Sagrestia 3", img: "icons/panoramiche/Sagrestia_3.jpg" },
+          { id: "sagrestia_4", label: "Sagrestia 4", img: "icons/panoramiche/Sagrestia_4.jpg" },
+          { id: "sagrestia_5", label: "Sagrestia 5", img: "icons/panoramiche/Sagrestia_5.jpg" },
+          { id: "sagrestia_6", label: "Sagrestia 6", img: "icons/panoramiche/Sagrestia_6.jpg" },
+          { id: "sagrestia_7", label: "Sagrestia 7", img: "icons/panoramiche/Sagrestia_7.jpg" }
+        ]
+      },
+      {
+        id: "chiostro_maggiore",
+        label: "Chiostro maggiore",
+        panoramas: [
+          { id: "chiostro_maggiore_1", label: "Chiostro maggiore 1", img: "icons/panoramiche/Chiostro_Maggiore_1.jpg" },
+          { id: "chiostro_maggiore_2", label: "Chiostro maggiore 2", img: "icons/panoramiche/Chiostro_Maggiore_2.jpg" }
+        ]
+      },
+      {
+        id: "facciata",
+        label: "Facciata",
+        panoramas: [
+          { id: "facciata_1", label: "Facciata 1", img: "icons/panoramiche/Facciata_1.jpg" },
+          { id: "facciata_2", label: "Facciata 2", img: "icons/panoramiche/Facciata_2.jpg" },
+          { id: "facciata_3", label: "Facciata 3", img: "icons/panoramiche/Facciata_3.jpg" }
+        ]
+      },
+      {
+        id: "chiostro_minore",
+        label: "Chiostro minore",
+        panoramas: [
+          { id: "chiostro_minore_1", label: "Chiostro minore 1", img: "icons/panoramiche/Chiostro_Minore_1.jpg" },
+          { id: "chiostro_minore_2", label: "Chiostro minore 2", img: "icons/panoramiche/Chiostro_Minore_2.jpg" },
+          { id: "chiostro_minore_3", label: "Chiostro minore 3", img: "icons/panoramiche/Chiostro_Minore_3.jpg" }
+        ]
+      }
+    ];
+
+    // elenco piatto di tutte le panoramiche di San Lorenzo (in ordine)
+    const sanLorenzoFlat = [];
+    sanLorenzoGroups.forEach(group => {
+      group.panoramas.forEach(p => sanLorenzoFlat.push(p));
+    });
+
+    /* GALLERIA SAN LORENZO */
+    const galleryImages = [
+      "icons/gallery/esterno_1.JPG",
+      "icons/gallery/esterno_2.JPG",
+      "icons/gallery/esterno_3.JPG",
+      "icons/gallery/esterno_4.JPG",
+      "icons/gallery/esterno_5.JPG",
+      "icons/gallery/esterno_6.JPG",
+      "icons/gallery/esterno_7.JPG",
+      "icons/gallery/esterno_8.JPG",
+      "icons/gallery/esterno_9.JPG",
+      "icons/gallery/navata_1.JPG",
+      "icons/gallery/navata_2.JPG",
+      "icons/gallery/navata_3.JPG",
+      "icons/gallery/navata_4.JPG",
+      "icons/gallery/navata_5.JPG",
+      "icons/gallery/navata_6.JPG",
+      "icons/gallery/navata_7.JPG",
+      "icons/gallery/cappelle_1.JPG",
+      "icons/gallery/cappelle_2.JPG",
+      "icons/gallery/cappelle_3.JPG",
+      "icons/gallery/cappelle_4.JPG",
+      "icons/gallery/chiostrino_1.JPG",
+      "icons/gallery/chiostrino_2.JPG",
+      "icons/gallery/chiostrino_3.JPG",
+      "icons/gallery/chiostro_1.JPG",
+      "icons/gallery/chiostro_2.JPG",
+      "icons/gallery/chiostro_3.JPG"
+    ];
+
+    let currentGalleryIndex = 0;
+    let galleryTouchStartX = null;
+
+    function buildGalleryGrid() {
+      const grid = document.getElementById('gallery-grid');
+      if (!grid) return;
+      grid.innerHTML = "";
+      galleryImages.forEach((src, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = "San Lorenzo";
+        item.appendChild(img);
+        item.onclick = () => openGalleryViewer(index);
+        grid.appendChild(item);
+      });
+    }
+
+    function openGalleryViewer(index) {
+      currentGalleryIndex = index;
+      const overlay = document.getElementById('gallery-overlay');
+      const img = document.getElementById('gallery-viewer-img');
+      img.src = galleryImages[currentGalleryIndex];
+      overlay.classList.add('visible');
+    }
+
+    function closeGalleryViewer() {
+      document.getElementById('gallery-overlay').classList.remove('visible');
+    }
+
+    function nextGalleryImage() {
+      currentGalleryIndex = (currentGalleryIndex + 1) % galleryImages.length;
+      document.getElementById('gallery-viewer-img').src = galleryImages[currentGalleryIndex];
+    }
+
+    function prevGalleryImage() {
+      currentGalleryIndex = (currentGalleryIndex - 1 + galleryImages.length) % galleryImages.length;
+      document.getElementById('gallery-viewer-img').src = galleryImages[currentGalleryIndex];
+    }
+
+    function onGalleryTouchStart(e) {
+      if (!e.changedTouches || !e.changedTouches.length) return;
+      galleryTouchStartX = e.changedTouches[0].screenX;
+    }
+
+    function onGalleryTouchEnd(e) {
+      if (galleryTouchStartX === null || !e.changedTouches || !e.changedTouches.length) return;
+      const dx = e.changedTouches[0].screenX - galleryTouchStartX;
+      if (Math.abs(dx) > 40) {
+        if (dx < 0) nextGalleryImage();
+        else prevGalleryImage();
+      }
+      galleryTouchStartX = null;
+    }
+
+    /* CATALOGO / HOME / PERCORSO IN SITU */
+    function openCatalog() {
+      const phone = document.getElementById('phone');
+      phone.classList.add('catalog-open');
+      phone.classList.remove('insitu-open');
+      if (searchIsOpen) toggleSearch(true);
+    }
+
+    function openInsitu() {
+      const phone = document.getElementById('phone');
+      phone.classList.add('insitu-open');
+      phone.classList.remove('catalog-open');
+      if (detailOpen) closeDetail();
+      if (baseOpen) closePercorsoBase();
+      if (searchIsOpen) toggleSearch(true);
+      showInsituTab('durata');
+    }
+
+    function openDigital() {
+      const phone = document.getElementById('phone');
+      phone.classList.add('digital-open');
+      phone.classList.remove('catalog-open');
+      phone.classList.remove('insitu-open');
+
+      if (detailOpen) closeDetail();
+      if (baseOpen) closePercorsoBase();
+      if (searchIsOpen) toggleSearch(true);
+    }
+
+    function openCommunity() {
+      const phone = document.getElementById('phone');
+      phone.classList.add('community-open');
+      phone.classList.remove('catalog-open');
+      phone.classList.remove('insitu-open');
+      phone.classList.remove('digital-open');
+
+      if (detailOpen) closeDetail();
+      if (baseOpen) closePercorsoBase();
+      if (searchIsOpen) toggleSearch(true);
+    }
+
+    function handleBack() {
+      const phone           = document.getElementById('phone');
+      const wrapper3D       = document.getElementById('explore-3d-wrapper');
+      const immersive       = document.getElementById('immersive-list');
+      const immersiveSL     = document.getElementById('immersive-sanlorenzo-wrapper');
+      const timelineWrapper = document.getElementById('timeline-wrapper');
+
+      // 0) Se sei dentro il modulo immersivo di San Lorenzo → torna alla lista Ricostruzioni Immersive
+      if (immersiveSL && immersiveSL.style.display === 'block') {
+        immersiveSL.style.display = 'none';
+        if (immersive) immersive.style.display = 'block';
+        return;
+      }
+
+      // 1) Se sei dentro Esplorazione 3D → torna alle 3 card digitali
+      if (wrapper3D && wrapper3D.style.display === 'block') {
+        close3DExplorer();
+        return;
+      }
+
+      // 1b) Se sei dentro la Timeline storica → torna alle 3 card digitali
+      if (timelineWrapper && timelineWrapper.style.display === 'block') {
+        timelineWrapper.classList.remove('digital-section-visible');
+        timelineWrapper.style.display = 'none';
+
+        const list      = document.querySelector('#digital-screen .digital-list');
+        const header    = document.querySelector('#digital-screen .digital-header');
+        const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+
+        if (header)    header.style.display = 'block';
+        if (menuLabel) menuLabel.style.display = 'block';
+        if (list)      list.style.display = 'block';
+
+        // disabilito lo scroll della pagina quando esco dalla Timeline
+        if (phone) phone.classList.remove('timeline-page-scroll');
+
+        return;
+      }
+
+      // 2) Se sei nella lista Ricostruzioni Immersive → torna alle 3 card digitali
+      if (immersive && immersive.style.display === 'block') {
+        immersive.classList.remove('digital-section-visible');
+        immersive.style.display = 'none';
+
+        const list      = document.querySelector('#digital-screen .digital-list');
+        const header    = document.querySelector('#digital-screen .digital-header');
+        const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+
+        if (header)    header.style.display = 'block';
+        if (menuLabel) menuLabel.style.display = 'block';
+        if (list)      list.style.display = 'block';
+
+        // tolgo il tema rosso
+        document.getElementById('digital-screen').classList.remove('immersive-theme');
+
+        return;
+      }
+
+      // 3) Il resto rimane uguale a prima (catalogo / in situ / digitale / community)
+      if (baseOpen) {
+        closePercorsoBase();
+      } else if (detailOpen) {
+        closeDetail();
+      } else if (phone.classList.contains('digital-open')) {
+        phone.classList.remove('digital-open');
+        if (searchIsOpen) toggleSearch(true);
+      } else if (phone.classList.contains('insitu-open')) {
+        phone.classList.remove('insitu-open');
+        if (searchIsOpen) toggleSearch(true);
+      } else if (phone.classList.contains('catalog-open')) {
+        phone.classList.remove('catalog-open');
+        if (searchIsOpen) toggleSearch(true);
+      } else if (phone.classList.contains('community-open')) {
+        phone.classList.remove('community-open');
+        if (searchIsOpen) toggleSearch(true);
+      }
+    }
+
+    function clearLists() {
+      document.getElementById('list-alfabetico').style.display = 'none';
+      document.getElementById('list-periodo').style.display = 'none';
+      document.getElementById('list-inaccessibili').style.display = 'none';
+
+      document.getElementById('tab-alfabetico').classList.remove('active');
+      document.getElementById('tab-periodo').classList.remove('active');
+      document.getElementById('tab-inaccessibili').classList.remove('active');
+    }
+
+    function showCatalogTab(tab) {
+      clearLists();
+
+      if (tab === 'alfabetico') {
+        document.getElementById('list-alfabetico').style.display = 'block';
+        document.getElementById('tab-alfabetico').classList.add('active');
+        renderAlfabetico();
+      } else if (tab === 'periodo') {
+        document.getElementById('list-periodo').style.display = 'block';
+        document.getElementById('tab-periodo').classList.add('active');
+        closePeriodo(true);
+      } else if (tab === 'inaccessibili') {
+        document.getElementById('list-inaccessibili').style.display = 'block';
+        document.getElementById('tab-inaccessibili').classList.add('active');
+        renderInaccessibili();
+      }
+
+      const q = document.getElementById('search-bar').value.trim();
+      if (q !== "") searchChiese(q);
+    }
+
+    function handleChurchClick(chiesa) {
+      const digitalScreen = document.getElementById('digital-screen');
+      const immersiveList = document.getElementById('immersive-list');
+
+      const immersiveOpen =
+        digitalScreen &&
+        digitalScreen.classList.contains('immersive-theme') &&
+        immersiveList &&
+        immersiveList.style.display === 'block';
+
+      // Se siamo in Percorso Digitale → Ricostruzioni Immersive
+      if (immersiveOpen) {
+        if (chiesa.nome.includes("San Lorenzo ad Septimum")) {
+          // apre il modulo immersivo con le 44 panoramiche
+          openImmersiveSanLorenzo();
+        } else {
+          // le altre chiese restano "coming soon"
+          showModal(chiesa);
+        }
+        return;
+      }
+
+      // Comportamento normale nel Catalogo delle chiese
+      if (chiesa.nome.includes("San Lorenzo ad Septimum")) {
+        openDetailSanLorenzo();
+      } else {
+        showModal(chiesa);
+      }
+    }
+
+    function creaCard(chiesa) {
+      const card = document.createElement('div');
+      card.className = 'church-card';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'church-thumb';
+      if (chiesa.img) {
+        thumb.style.backgroundImage = `url('${chiesa.img}')`;
+      }
+
+      const div = document.createElement('div');
+      div.className = 'church-divider';
+
+      const text = document.createElement('div');
+      text.className = 'church-text';
+
+      const nome = document.createElement('div');
+      nome.className = 'church-name';
+      nome.textContent = chiesa.nome;
+
+      const addr = document.createElement('div');
+      addr.className = 'church-address';
+      addr.textContent = chiesa.indirizzo;
+
+      text.appendChild(nome);
+      text.appendChild(addr);
+
+      card.appendChild(thumb);
+      card.appendChild(div);
+      card.appendChild(text);
+
+      card.onclick = () => handleChurchClick(chiesa);
+
+      return card;
+    }
+
+    function renderAlfabetico() {
+      const container = document.getElementById('list-alfabetico');
+      container.innerHTML = "";
+
+      const sorted = [...chiese].sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' })
+      );
+
+      const sanLorenzoIndex = sorted.findIndex(ch =>
+        ch.nome.includes("San Lorenzo ad Septimum")
+      );
+      if (sanLorenzoIndex > -1) {
+        const [sanLorenzo] = sorted.splice(sanLorenzoIndex, 1);
+        sorted.unshift(sanLorenzo);
+      }
+
+      sorted.forEach(ch => container.appendChild(creaCard(ch)));
+    }
+
+    function renderPeriodoList(periodoSelezionato) {
+      const container = document.getElementById('period-list');
+      container.innerHTML = "";
+
+      const gruppo = chiese
+        .filter(ch => ch.periodo === periodoSelezionato)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+      gruppo.forEach(ch => container.appendChild(creaCard(ch)));
+    }
+
+    function openPeriodo(periodoSelezionato) {
+      currentPeriodo = periodoSelezionato;
+      document.getElementById('period-results').style.display = 'block';
+      document.getElementById('period-choices').style.display = 'none';
+      renderPeriodoList(periodoSelezionato);
+
+      const q = document.getElementById('search-bar').value.trim();
+      if (q !== "") searchChiese(q);
+    }
+
+    function closePeriodo(fromTabChange) {
+      document.getElementById('period-results').style.display = 'none';
+      document.getElementById('period-choices').style.display = 'flex';
+      currentPeriodo = null;
+
+      if (!fromTabChange) {
+        document.getElementById('period-list').innerHTML = "";
+      }
+    }
+
+    function renderInaccessibili() {
+      const container = document.getElementById('list-inaccessibili');
+      container.innerHTML = "";
+
+      const filtrate = chiese
+        .filter(ch => ch.stato === 'disuso')
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+      filtrate.forEach(ch => container.appendChild(creaCard(ch)));
+    }
+
+    /* PERCORSO IN SITU: TAB LOGIC */
+    function showInsituTab(tab) {
+      const durata = document.getElementById('insitu-list-durata');
+      const tipologia = document.getElementById('insitu-list-tipologia');
+      const personalizzato = document.getElementById('insitu-list-personalizzato');
+
+      durata.style.display = 'none';
+      tipologia.style.display = 'none';
+      personalizzato.style.display = 'none';
+
+      document.getElementById('insitu-tab-durata').classList.remove('active');
+      document.getElementById('insitu-tab-tipologia').classList.remove('active');
+      document.getElementById('insitu-tab-personalizzato').classList.remove('active');
+
+      const builder = document.getElementById('route-builder');
+      if (builder) {
+        builder.style.display = 'none';
+        currentEditingRouteId = null;
+      }
+
+      if (tab === 'durata') {
+        durata.style.display = 'block';
+        document.getElementById('insitu-tab-durata').classList.add('active');
+      } else if (tab === 'tipologia') {
+        tipologia.style.display = 'block';
+        document.getElementById('insitu-tab-tipologia').classList.add('active');
+      } else {
+        personalizzato.style.display = 'block';
+        document.getElementById('insitu-tab-personalizzato').classList.add('active');
+      }
+    }
+
+    /* RICERCA */
+    function normalizeText(str) {
+      return str
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function matchesFuzzy(chiesa, queryTokens) {
+      if (!queryTokens.length) return true;
+      const haystack = normalizeText(chiesa.nome + " " + chiesa.indirizzo);
+      return queryTokens.every(t => haystack.includes(t));
+    }
+
+    function getActiveTab() {
+      if (document.getElementById('tab-alfabetico').classList.contains('active')) return 'alfabetico';
+      if (document.getElementById('tab-periodo').classList.contains('active')) return 'periodo';
+      if (document.getElementById('tab-inaccessibili').classList.contains('active')) return 'inaccessibili';
+      return 'alfabetico';
+    }
+
+    function searchChiese(query) {
+      const normalized = normalizeText(query);
+      const tokens = normalized.length ? normalized.split(" ") : [];
+      const active = getActiveTab();
+      const clearIcon = document.getElementById('search-clear');
+
+      const digitalScreen = document.getElementById('digital-screen');
+      const immersiveList = document.getElementById('immersive-list');
+      const immersiveOpen =
+        digitalScreen &&
+        digitalScreen.classList.contains('immersive-theme') &&
+        immersiveList &&
+        immersiveList.style.display === 'block';
+
+      // Se non c'è testo nella barra di ricerca
+      if (!tokens.length) {
+        clearIcon.classList.remove('visible');
+
+        if (immersiveOpen) {
+          // resetta la lista immersive
+          renderImmersiveList();
+          return;
+        }
+
+        if (active === 'alfabetico') renderAlfabetico();
+        if (active === 'inaccessibili') renderInaccessibili();
+        if (active === 'periodo' && currentPeriodo) renderPeriodoList(currentPeriodo);
+        return;
+      }
+
+      clearIcon.classList.add('visible');
+
+      // 🔴 Se siamo in Ricostruzioni Immersive → filtra lì
+      if (immersiveOpen) {
+        const container = document.getElementById('immersive-churches');
+        container.innerHTML = "";
+
+        const filtro = chiese
+          .filter(ch => matchesFuzzy(ch, tokens))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+        const sanLorenzoIndex = filtro.findIndex(ch =>
+          ch.nome.includes("San Lorenzo ad Septimum")
+        );
+        if (sanLorenzoIndex > -1) {
+          const [sanLorenzo] = filtro.splice(sanLorenzoIndex, 1);
+          filtro.unshift(sanLorenzo);
+        }
+
+        filtro.forEach(ch => container.appendChild(creaCard(ch)));
+        return;
+      }
+
+      // 🔵 Catalogo – Ordine alfabetico
+      if (active === 'alfabetico') {
+        const container = document.getElementById('list-alfabetico');
+        container.innerHTML = "";
+
+        const filtro = chiese
+          .filter(ch => matchesFuzzy(ch, tokens))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+        const sanLorenzoIndex = filtro.findIndex(ch =>
+          ch.nome.includes("San Lorenzo ad Septimum")
+        );
+        if (sanLorenzoIndex > -1) {
+          const [sanLorenzo] = filtro.splice(sanLorenzoIndex, 1);
+          filtro.unshift(sanLorenzo);
+        }
+
+        filtro.forEach(ch => container.appendChild(creaCard(ch)));
+      }
+
+      // 🔵 Catalogo – Inaccessibili
+      if (active === 'inaccessibili') {
+        const container = document.getElementById('list-inaccessibili');
+        container.innerHTML = "";
+
+        const filtro = chiese
+          .filter(ch => ch.stato === 'disuso' && matchesFuzzy(ch, tokens))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+        filtro.forEach(ch => container.appendChild(creaCard(ch)));
+      }
+
+      // 🔵 Catalogo – Periodo
+      if (active === 'periodo' && currentPeriodo) {
+        const container = document.getElementById('period-list');
+        container.innerHTML = "";
+
+        const filtro = chiese
+          .filter(ch => ch.periodo === currentPeriodo && matchesFuzzy(ch, tokens))
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' }));
+
+        filtro.forEach(ch => container.appendChild(creaCard(ch)));
+      }
+    }
+
+    function toggleSearch(forceClose = false) {
+      const phone = document.getElementById('phone');
+      const bar = document.getElementById('search-bar');
+      const clearIcon = document.getElementById('search-clear');
+
+      const digitalScreen = document.getElementById('digital-screen');
+      const immersiveList = document.getElementById('immersive-list');
+      const immersiveOpen =
+        digitalScreen &&
+        digitalScreen.classList.contains('immersive-theme') &&
+        immersiveList &&
+        immersiveList.style.display === 'block';
+
+      if (forceClose || searchIsOpen) {
+        searchIsOpen = false;
+        phone.classList.remove('search-open');
+        bar.value = "";
+        clearIcon.classList.remove('visible');
+
+        if (immersiveOpen) {
+          // resetta lista immersive quando chiudi la ricerca
+          renderImmersiveList();
+          return;
+        }
+
+        const active = getActiveTab();
+        if (active === 'alfabetico') renderAlfabetico();
+        if (active === 'inaccessibili') renderInaccessibili();
+        if (active === 'periodo' && currentPeriodo) renderPeriodoList(currentPeriodo);
+      } else {
+        searchIsOpen = true;
+        phone.classList.add('search-open');
+        setTimeout(() => bar.focus(), 200);
+      }
+    }
+
+    /* DETTAGLIO / VIDEO */
+    function openDetailSanLorenzo() {
+      const phone = document.getElementById('phone');
+      detailOpen = true;
+      phone.classList.add('detail-open');
+      showDetailTab('storia');
+    }
+
+    function closeDetail() {
+      const phone = document.getElementById('phone');
+      detailOpen = false;
+      phone.classList.remove('detail-open');
+
+      const v = document.getElementById('rilievo-video');
+      const btn = document.getElementById('play-btn');
+      if (v) v.pause();
+      if (btn) btn.textContent = "▶";
+    }
+
+    function showDetailTab(tab) {
+      const v = document.getElementById('rilievo-video');
+      const playBtn = document.getElementById('play-btn');
+      if (v && tab !== 'rilievo') {
+        v.pause();
+        if (playBtn) playBtn.textContent = "▶";
+      }
+
+      document.getElementById('detail-storia').classList.remove('active');
+      document.getElementById('detail-rilievo').classList.remove('active');
+      document.getElementById('detail-gallery').classList.remove('active');
+      document.getElementById('tab-storia').classList.remove('active');
+      document.getElementById('tab-rilievo').classList.remove('active');
+      document.getElementById('tab-gallery').classList.remove('active');
+
+      if (tab === 'storia') {
+        document.getElementById('detail-storia').classList.add('active');
+        document.getElementById('tab-storia').classList.add('active');
+      } else if (tab === 'rilievo') {
+        document.getElementById('detail-rilievo').classList.add('active');
+        document.getElementById('tab-rilievo').classList.add('active');
+      } else {
+        document.getElementById('detail-gallery').classList.add('active');
+        document.getElementById('tab-gallery').classList.add('active');
+      }
+    }
+
+    function togglePlay() {
+      const v = document.getElementById('rilievo-video');
+      const btn = document.getElementById('play-btn');
+      if (!v || !btn) return;
+
+      if (v.paused) {
+        v.play();
+        btn.textContent = "⏸";
+      } else {
+        v.pause();
+        btn.textContent = "▶";
+      }
+    }
+
+    function initVideoControls() {
+      const v = document.getElementById('rilievo-video');
+      const slider = document.getElementById('volume-slider');
+      const volBtn = document.getElementById('volume-btn');
+
+      if (!v || !slider || !volBtn) return;
+
+      v.volume = parseFloat(slider.value);
+      lastVolume = v.volume;
+
+      slider.addEventListener('input', () => {
+        v.volume = parseFloat(slider.value);
+        lastVolume = v.volume;
+        if (v.volume > 0) {
+          v.muted = false;
+          volBtn.textContent = "🎧";
+        }
+      });
+
+      volBtn.addEventListener('click', () => {
+        if (v.muted || v.volume === 0) {
+          v.muted = false;
+          v.volume = lastVolume || 0.8;
+          slider.value = v.volume;
+          volBtn.textContent = "🎧";
+        } else {
+          lastVolume = v.volume;
+          v.muted = true;
+          v.volume = 0;
+          slider.value = 0;
+          volBtn.textContent = "🔇";
+        }
+      });
+    }
+
+    /* MODAL COMING SOON */
+ function showModal(chiesa) {
+  const modal = document.getElementById('modal');
+  const imgEl = document.getElementById('modal-image');
+
+  // Controllo se siamo dentro Ricostruzioni Immersive (Percorso Digitale)
+  const digitalScreen = document.getElementById('digital-screen');
+  const immersiveList = document.getElementById('immersive-list');
+  const isDigital = 
+    digitalScreen &&
+    digitalScreen.classList.contains('immersive-theme') &&
+    immersiveList &&
+    immersiveList.style.display === 'block';
+
+  // Se siamo nel digitale -> tema rosso
+  if (isDigital) {
+    modal.classList.add('digital-theme');
+  } else {
+    modal.classList.remove('digital-theme');
+  }
+
+  if (chiesa && chiesa.img) {
+    imgEl.src = chiesa.img;
+  } else {
+    imgEl.src = "";
+  }
+
+  modal.classList.add('visible');
+}
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('visible');
+    }
+
+    function openFeedbackModal() {
+      document.getElementById("feedback-modal").classList.add("visible");
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById("feedback-modal").classList.remove("visible");
+    }
+
+    function publishFeedback() {
+      const text = document.getElementById("feedback-text").value.trim();
+
+      if (!text) {
+        alert("Scrivi un commento prima di pubblicare.");
+        return;
+      }
+
+      alert("Grazie per il tuo feedback!");
+      document.getElementById("feedback-text").value = "";
+      closeFeedbackModal();
+    }
+
+// CARICAMENTO FOTO MEMORIE COMMUNITY
+function openMemoryPicker() {
+  const fileInput = document.getElementById("memory-upload");
+  if (!fileInput) {
+    console.error("Impossibile trovare l'input file per le memorie.");
+    return;
+  }
+  // azzero il valore così puoi ricaricare anche la stessa foto
+  fileInput.value = "";
+  fileInput.click();
+}
+
+function handleMemoryPhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const imageSrc = e.target.result;
+    addMemoryThumbnail(imageSrc);
+  };
+  reader.readAsDataURL(file);
+}
+
+function addMemoryThumbnail(imageSrc) {
+  const grid = document.querySelector(".community-memories-grid");
+  if (!grid) {
+    console.error("Impossibile trovare il contenitore delle memorie.");
+    return;
+  }
+
+  // il riquadro + ha classe "community-memory-add"
+  const addButton = grid.querySelector(".community-memory-add");
+  if (!addButton) {
+    console.error("Impossibile trovare il pulsante + nelle memorie.");
+    return;
+  }
+
+  // le miniature usano la classe "community-memory-thumb"
+  const newThumb = document.createElement("div");
+  newThumb.classList.add("community-memory-thumb");
+
+  const img = document.createElement("img");
+  img.src = imageSrc;
+  img.alt = "Memoria caricata dall'utente";
+
+  newThumb.appendChild(img);
+
+  // inserisco la nuova foto subito dopo il riquadro +
+  grid.insertBefore(newThumb, addButton.nextSibling);
+}
+
+    /* PERSONALIZZA IL TUO PERCORSO */
+
+    function buildRouteBuilderList() {
+      const listEl = document.getElementById('route-builder-list');
+      if (!listEl) return;
+
+      sortedChieseForRoutes = [...chiese].sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' })
+      );
+
+      listEl.innerHTML = "";
+      sortedChieseForRoutes.forEach(ch => {
+        const row = document.createElement('label');
+        row.className = 'builder-row';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = ch.nome;
+
+        const span = document.createElement('span');
+        span.textContent = ch.nome;
+
+        row.appendChild(cb);
+        row.appendChild(span);
+        listEl.appendChild(row);
+      });
+    }
+
+    function clearBuilderSelections() {
+      const checkboxes = document.querySelectorAll('#route-builder-list input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+    }
+
+    function startNewRoute() {
+      const builder = document.getElementById('route-builder');
+      const nameInput = document.getElementById('route-name-input');
+      if (!builder || !nameInput) return;
+
+      currentEditingRouteId = null;
+      clearBuilderSelections();
+      nameInput.value = "";
+
+      builder.style.display = 'block';
+    }
+
+    function cancelRouteBuilder() {
+      const builder = document.getElementById('route-builder');
+      if (builder) builder.style.display = 'none';
+      currentEditingRouteId = null;
+    }
+
+    function saveRoute() {
+      const nameInput = document.getElementById('route-name-input');
+      const checkboxes = document.querySelectorAll('#route-builder-list input[type="checkbox"]');
+      if (!nameInput || !checkboxes.length) return;
+
+      const selected = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) selected.push(cb.value);
+      });
+
+      if (selected.length === 0) {
+        alert("Seleziona almeno una chiesa per creare il percorso.");
+        return;
+      }
+
+      let name = nameInput.value.trim();
+      if (!name) {
+        name = "Percorso senza nome";
+      }
+
+      if (currentEditingRouteId) {
+        const idx = customRoutes.findIndex(r => r.id === currentEditingRouteId);
+        if (idx !== -1) {
+          customRoutes[idx].name = name;
+          customRoutes[idx].chiese = selected;
+        }
+      } else {
+        const newRoute = {
+          id: Date.now().toString(),
+          name,
+          chiese: selected
+        };
+        customRoutes.push(newRoute);
+      }
+
+      renderCustomRoutes();
+      cancelRouteBuilder();
+    }
+
+    function renderCustomRoutes() {
+      const container = document.getElementById('saved-routes-list');
+      if (!container) return;
+
+      container.innerHTML = "";
+      if (!customRoutes.length) return;
+
+      customRoutes.forEach(route => {
+        const card = document.createElement('div');
+        card.className = 'insitu-card saved-route-card';
+
+        const icon = document.createElement('div');
+        icon.className = 'insitu-icon';
+        icon.style.backgroundImage = "url('icons/insitu_personalizzato_placeholder.jpg')";
+
+        const text = document.createElement('div');
+        text.className = 'insitu-text';
+
+        const title = document.createElement('div');
+        title.className = 'insitu-main';
+        title.textContent = route.name;
+
+        const desc = document.createElement('div');
+        desc.className = 'insitu-desc';
+        desc.textContent = route.chiese.length + " chiese selezionate";
+
+        text.appendChild(title);
+        text.appendChild(desc);
+
+        const menuWrapper = document.createElement('div');
+        menuWrapper.className = 'route-menu-wrapper';
+
+        const trigger = document.createElement('button');
+        trigger.type = "button";
+        trigger.className = 'route-menu-trigger';
+        trigger.textContent = "⋯";
+
+        const menu = document.createElement('div');
+        menu.className = 'route-menu';
+
+        const btnEdit = document.createElement('button');
+        btnEdit.type = "button";
+        btnEdit.innerHTML = '<span class="route-menu-icon">✏️</span><span>Modifica percorso</span>';
+        btnEdit.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openRouteForEdit(route);
+          menu.classList.remove('visible');
+        });
+
+        const btnRename = document.createElement('button');
+        btnRename.type = "button";
+        btnRename.innerHTML = '<span class="route-menu-icon">📝</span><span>Rinomina percorso</span>';
+        btnRename.addEventListener('click', (e) => {
+          e.stopPropagation();
+          renameRoute(route);
+          menu.classList.remove('visible');
+        });
+
+        const btnDelete = document.createElement('button');
+        btnDelete.type = "button";
+        btnDelete.innerHTML = '<span class="route-menu-icon">🗑️</span><span>Elimina percorso</span>';
+        btnDelete.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteRoute(route.id);
+          menu.classList.remove('visible');
+        });
+
+        menu.appendChild(btnEdit);
+        menu.appendChild(btnRename);
+        menu.appendChild(btnDelete);
+
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const allMenus = document.querySelectorAll('.route-menu');
+          allMenus.forEach(m => { if (m !== menu) m.classList.remove('visible'); });
+          menu.classList.toggle('visible');
+        });
+
+        menuWrapper.appendChild(trigger);
+        menuWrapper.appendChild(menu);
+
+        card.appendChild(icon);
+        card.appendChild(text);
+        card.appendChild(menuWrapper);
+
+        container.appendChild(card);
+      });
+    }
+
+    function openRouteForEdit(route) {
+      const builder = document.getElementById('route-builder');
+      const nameInput = document.getElementById('route-name-input');
+      if (!builder || !nameInput) return;
+
+      currentEditingRouteId = route.id;
+      clearBuilderSelections();
+
+      const checkboxes = document.querySelectorAll('#route-builder-list input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        if (route.chiese.includes(cb.value)) cb.checked = true;
+      });
+
+      nameInput.value = route.name;
+      builder.style.display = 'block';
+    }
+
+    function renameRoute(route) {
+      const nuovoNome = prompt("Rinomina il percorso:", route.name);
+      if (nuovoNome === null) return;
+      const trimmed = nuovoNome.trim();
+      if (!trimmed) return;
+      route.name = trimmed;
+      renderCustomRoutes();
+    }
+
+    function deleteRoute(routeId) {
+      const conferma = confirm("Sei sicuro di voler eliminare questo percorso?");
+      if (!conferma) return;
+      customRoutes = customRoutes.filter(r => r.id !== routeId);
+      renderCustomRoutes();
+    }
+
+    // chiusura menu percorsi se clicchi fuori
+    document.addEventListener('click', () => {
+      const allMenus = document.querySelectorAll('.route-menu');
+      allMenus.forEach(m => m.classList.remove('visible'));
+    });
+
+    /* ESPLORAZIONE 3D – STREET VIEW */
+    const exploreStops = [
+      {
+        title: "1. San Lorenzo",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255519514!6m8!1m7!1sC-OBUcpQYKp5oSPVZetB8A!2m2!1d40.98575618322715!2d14.19901741702249!3f186.3297281849089!4f8.780871723285927!5f0.7820865974627469"
+      },
+      {
+        title: "2. San Biagio",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255436170!6m8!1m7!1skRf1_N6FvcIJzL_FLj0SGw!2m2!1d40.9811486510377!2d14.20116282348411!3f176.62888157636792!4f5.7022248659794315!5f0.7820865974627469"
+      },
+      {
+        title: "3. Porta San Giovanni",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255367766!6m8!1m7!1swRJ2FXgXp_j7po3i1wBSVw!2m2!1d40.97936162057002!2d14.19939734610633!3f104.66513853778132!4f7.349474535617716!5f0.7820865974627469"
+      },
+      {
+        title: "4. Castello Normanno Svevo",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255597441!6m8!1m7!1srMKi1XyY4l7w_xJ6DMzvMQ!2m2!1d40.97929269488183!2d14.20366106402933!3f140.42794226308848!4f10.5276111201225!5f0.4003161831622405"
+      },
+      {
+        title: "5. Cattedrale di San Paolo",
+        url: "https://www.google.com/maps/embed?pb=!4v1764256160003!6m8!1m7!1sqR9hdjDidxFfKzfT4HdEAw!2m2!1d40.9765974555574!2d14.20269126011353!3f155.00884607750018!4f29.802659026930016!5f0.7820865974627469"
+      },
+      {
+        title: "6. Quartiere Lemitone",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255312920!6m8!1m7!1stb6JOtExd8oK5TD0N8YOZQ!2m2!1d40.97160470368789!2d14.20475628077381!3f131.90477757253478!4f5.780083238171315!5f0.4000000000000002"
+      },
+      {
+        title: "7. Porta Napoli",
+        url: "https://www.google.com/maps/embed?pb=!4v1764255670252!6m8!1m7!1sXJLWUOyR3b97svbvvQm9CA!2m2!1d40.9687778316798!2d14.20792295798936!3f0.2121451396942291!4f16.058824334776062!5f0.7820865974627469"
+      }
+    ];
+
+    /* TIMELINE STORICA – EVOLUZIONE URBANA */
+    const timelinePeriods = [
+      {
+        year: "850",
+        title: "Le origini di San Lorenzo",
+        img: "icons/evoluzione_urbana/1.jpg",
+        text: `L’area in cui oggi sorge il quartiere di San Lorenzo affonda le proprie radici nell’antichità. 
+Elemento determinante fu la Via Campana, asse viario che collegava Capua e Pozzuoli e che, al settimo miglio da Capua, 
+vide in seguito sorgere l’abbazia di San Lorenzo ad Septimum. Gli scavi archeologici condotti tra il 1986 e il 2002 
+hanno confermato la presenza di tratti della strada e di necropoli databili tra IV e III secolo a.C. 
+La Tabula Peutingeriana conferma l’importanza strategica dell’area. 
+Dopo la caduta dell’Impero romano e le crisi dei secoli successivi, i longobardi di Capua ristabiliscono un controllo politico 
+sul territorio e, in questo contesto, viene fondato il monastero di San Lorenzo nell’850. 
+Aversa ancora non esiste: nascerà due secoli dopo. San Lorenzo è quindi un nucleo religioso e territoriale precedente la città, 
+attorno al quale si articolerà in seguito lo sviluppo urbano. Un documento conservato presso la Biblioteca Apostolica Vaticana 
+attesta già allora l’appartenenza di San Lorenzo alla congrega di San Biagio.`
+      },
+      {
+        year: "1030",
+        title: "Nasce la Contea",
+        img: "icons/evoluzione_urbana/2.jpg",
+        text: `Il vero atto di nascita della città di Aversa avviene nel 1030, quando Rainulfo Drengot riceve il casale 
+di Sanctum Paulum ad Averze. Da semplice insediamento rurale, il sito si trasforma rapidamente in centro fortificato. 
+L’impianto urbano adottato è di tipo radiocentrico: al centro la cattedrale e il palazzo comitale, all’esterno i borghi 
+sviluppati lungo direttrici radiali, il tutto racchiuso da una cinta muraria.`
+      },
+      {
+        year: "1053",
+        title: "Il cuore spirituale",
+        img: "icons/evoluzione_urbana/3.jpg",
+        text: `Nel 1053 l’insediamento viene elevato a sede vescovile, consolidando il legame tra potere religioso e civile. 
+In questo periodo si sviluppano i monasteri benedettini, tra cui San Lorenzo, e si assiste all’elevazione di nuove porte 
+di ingresso alla città, che rafforzano il controllo sugli accessi e la struttura difensiva del centro urbano.`
+      },
+      {
+        year: "1303",
+        title: "Un nuovo tracciato",
+        img: "icons/evoluzione_urbana/4.jpg",
+        text: `Con il passaggio al dominio angioino si registra un’evoluzione urbanistica significativa. 
+Nel 1303 viene aperta la “strada nuova”, che si discosta dall’antica Via Campana e attraversa tangenzialmente la città, 
+favorendo la nascita di nuovi borghi e mercati e accompagnando l’ampliamento della cinta muraria.`
+      },
+      {
+        year: "1442",
+        title: "Il periodo aragonese",
+        img: "icons/evoluzione_urbana/5.jpg",
+        text: `Sotto gli aragonesi Aversa non subisce trasformazioni radicali, ma consolida le proprie istituzioni civili e religiose. 
+Il borgo di San Lorenzo rimane in parte marginale rispetto al centro, ma mantiene un ruolo chiave nelle dispute giurisdizionali 
+con la curia vescovile e attrae risorse. Il monastero non è solo luogo di culto: esercita un controllo territoriale più ampio 
+e possiede beni diffusi, tra cui specchi d’acqua e zone umide lungo i Regi Lagni.`
+      },
+      {
+        year: "1503",
+        title: "Il Viceregno spagnolo",
+        img: "icons/evoluzione_urbana/6.jpg",
+        text: `Tra Viceregno spagnolo ed età borbonica la città attraversa profonde trasformazioni urbane e sociali. 
+Da un lato si registrano interventi infrastrutturali e ampliamenti che portano alla nascita di nuovi quartieri, 
+come il Lemitone, segnando un’espansione più lineare e meno radiocentrica. Dall’altro, pestilenze, crisi demografiche 
+e terremoti segnano la vita cittadina. La veduta di Gian Battista Pacichelli mostra Aversa a volo d’uccello, evidenziando 
+il volto monumentale della città e le nuove aperture urbane.`
+      },
+      {
+        year: "1734",
+        title: "L’età borbonica",
+        img: "icons/evoluzione_urbana/7.jpg",
+        text: `Nel XVIII secolo, in età borbonica, Aversa è interessata da interventi urbanistici e architettonici, 
+tra cui la costruzione di Porta Napoli, divenuta uno dei simboli della città. 
+La carta delle Reali Cacce di Terra di Lavoro costituisce la prima rappresentazione scientifica dell’area, basata su rilievi topografici, 
+e mostra chiaramente la città con i borghi circostanti. Aversa non è più solo un nodo viario, ma un centro urbano strutturato e riconoscibile.`
+      },
+      {
+        year: "1835",
+        title: "La città aperta",
+        img: "icons/evoluzione_urbana/8.jpg",
+        text: `Nel XIX secolo la città fortificata lascia gradualmente il posto a una configurazione urbana più aperta. 
+L’abbattimento di diverse porte urbane accompagna questo processo. 
+Si avvia una maggiore integrazione del complesso di San Lorenzo nel tessuto edilizio circostante: 
+la soppressione degli ordini monastici porta, ad esempio, alla destinazione del chiostro a sede scolastica. 
+La carta di Antonio Malvagni rende evidente questo passaggio, con il centro antico circondato da nuovi assi viari e da una vivace espansione edilizia.`
+      },
+      {
+        year: "1912",
+        title: "Persistenze e metamorfosi",
+        img: "icons/evoluzione_urbana/9.jpg",
+        text: `Nel Novecento la storia di Aversa si innesta sulle premesse ottocentesche. 
+La costruzione della Ferrovia Alifana, le distruzioni belliche e i quartieri popolari INA-Casa trasformano profondamente il volto urbano. 
+La città viene progressivamente inglobata in un sistema metropolitano policentrico e perde buona parte della sua connotazione agricola originaria.`
+      },
+      {
+        year: "Aversa oggi",
+        title: "Una città in trasformazione",
+        img: "icons/evoluzione_urbana/10.jpg",
+        text: `Oggi Aversa è un organismo urbano complesso e in continua trasformazione, con un tessuto edilizio fitto e articolato. 
+La presenza di edifici religiosi è ancora fortemente caratterizzante: la città è storicamente nota come la “città delle cento chiese”. 
+Le stratificazioni storiche, dal nucleo normanno alla città contemporanea, convivono in un unico paesaggio urbano.`
+      }
+    ];
+
+    let currentTimelineIndex = 0;
+
+    function open3DExplorer() {
+      const list      = document.querySelector('#digital-screen .digital-list');
+      const wrapper   = document.getElementById('explore-3d-wrapper');
+      const header    = document.querySelector('#digital-screen .digital-header');
+      const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+      if (!list || !wrapper) return;
+
+      // nascondo titolo, sottotitolo e barra rossa
+      if (header)    header.style.display = 'none';
+      if (menuLabel) menuLabel.style.display = 'none';
+
+      // nascondo le 3 card
+      list.style.display = 'none';
+
+      // mostro il blocco 3D con transizione
+      wrapper.style.display = 'block';
+      wrapper.classList.add('digital-section-visible');
+
+      // parto sempre dalla tappa 1
+      change3DStop(0);
+    }
+
+    function close3DExplorer() {
+      const list      = document.querySelector('#digital-screen .digital-list');
+      const wrapper   = document.getElementById('explore-3d-wrapper');
+      const header    = document.querySelector('#digital-screen .digital-header');
+      const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+
+      // nascondo il blocco 3D
+      if (wrapper) {
+        wrapper.classList.remove('digital-section-visible');
+        wrapper.style.display = 'none';
+      }
+
+      // ri-mostro le 3 card
+      if (list) list.style.display = 'block';
+
+      // ri-mostro titolo, sottotitolo e barra rossa
+      if (header)    header.style.display = 'block';
+      if (menuLabel) menuLabel.style.display = 'block';
+    }
+
+    /* TIMELINE STORICA – LOGICA DI NAVIGAZIONE */
+    function openTimeline() {
+      const list      = document.querySelector('#digital-screen .digital-list');
+      const wrapper   = document.getElementById('timeline-wrapper');
+      const header    = document.querySelector('#digital-screen .digital-header');
+      const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+      const phone     = document.getElementById('phone');
+
+      if (!list || !wrapper) return;
+
+      // nascondo titolo, sottotitolo, barra rossa e le 3 card
+      if (header)    header.style.display = 'none';
+      if (menuLabel) menuLabel.style.display = 'none';
+      list.style.display = 'none';
+
+      // mostro la timeline con transizione
+      wrapper.style.display = 'block';
+      wrapper.classList.add('digital-section-visible');
+
+      // abilito lo scroll dell'intera pagina SOLO per la timeline
+      if (phone) phone.classList.add('timeline-page-scroll');
+
+      // parto sempre dal primo periodo
+      currentTimelineIndex = 0;
+      renderTimelinePeriod(true);
+    }
+
+    function renderTimelinePeriod(initial = false) {
+      const yearEl   = document.getElementById('timeline-year');
+      const titleEl  = document.getElementById('timeline-period-title');
+      const imgEl    = document.getElementById('timeline-image');
+      const textEl   = document.getElementById('timeline-text');
+      const content  = document.getElementById('timeline-content');
+
+      if (!yearEl || !titleEl || !imgEl || !textEl || !content) return;
+      const period = timelinePeriods[currentTimelineIndex];
+      if (!period) return;
+
+      const applyContent = () => {
+        yearEl.textContent  = period.year;
+        titleEl.textContent = period.title;
+        imgEl.src           = period.img;
+        textEl.textContent  = period.text;
+        content.scrollTop   = 0;       // torna all’inizio quando cambi periodo
+        content.style.opacity = 1;
+      };
+
+      if (initial) {
+        applyContent();
+      } else {
+        content.style.opacity = 0;
+        setTimeout(applyContent, 200);
+      }
+    }
+
+    function prevTimelinePeriod() {
+      if (!timelinePeriods.length) return;
+      currentTimelineIndex =
+        (currentTimelineIndex - 1 + timelinePeriods.length) % timelinePeriods.length;
+      renderTimelinePeriod();
+    }
+
+    function nextTimelinePeriod() {
+      if (!timelinePeriods.length) return;
+      currentTimelineIndex =
+        (currentTimelineIndex + 1) % timelinePeriods.length;
+      renderTimelinePeriod();
+    }
+
+    function change3DStop(index) {
+      if (!exploreStops[index]) return;
+
+      const iframe  = document.getElementById('streetview-frame');
+      const titleEl = document.getElementById('explore-3d-stop-title');
+      if (!iframe || !titleEl) return;
+
+      iframe.src = exploreStops[index].url;
+      titleEl.textContent = exploreStops[index].title;
+
+      const buttons = document.querySelectorAll('.explore-3d-btn');
+      buttons.forEach((btn, i) => {
+        if (i === index) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    function openImmersive() {
+      const list      = document.querySelector('#digital-screen .digital-list');
+      const immersive = document.getElementById('immersive-list');
+      const header    = document.querySelector('#digital-screen .digital-header');
+      const menuLabel = document.querySelector('#digital-screen .digital-menu-label');
+
+      // nascondo header, sottotitolo, barra rossa e le 3 card
+      if (header)    header.style.display = 'none';
+      if (menuLabel) menuLabel.style.display = 'none';
+      if (list)      list.style.display = 'none';
+
+      // mostro la lista immersive con transizione
+      immersive.style.display = 'block';
+      immersive.classList.add('digital-section-visible');
+
+      // attivo il tema rosso sulle card delle chiese
+      document.getElementById('digital-screen').classList.add('immersive-theme');
+
+      // riempio la lista
+      renderImmersiveList();
+    }
+
+    function renderImmersiveList() {
+      const container = document.getElementById('immersive-churches');
+      container.innerHTML = "";
+
+      // ordine alfabetico
+      const sorted = [...chiese].sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'it', { sensitivity: 'base' })
+      );
+
+      // San Lorenzo in cima, come nel catalogo
+      const sanLorenzoIndex = sorted.findIndex(ch =>
+        ch.nome.includes("San Lorenzo ad Septimum")
+      );
+      if (sanLorenzoIndex > -1) {
+        const [sanLorenzo] = sorted.splice(sanLorenzoIndex, 1);
+        sorted.unshift(sanLorenzo);
+      }
+
+      // creo le card identiche al catalogo
+      sorted.forEach(ch => container.appendChild(creaCard(ch)));
+    }
+
+    function openImmersiveSanLorenzo() {
+      const immersiveList  = document.getElementById('immersive-list');
+      const slWrapper      = document.getElementById('immersive-sanlorenzo-wrapper');
+
+      if (immersiveList) immersiveList.style.display = 'block'; // assicuro che esista
+      if (!slWrapper) return;
+
+      // nascondo la lista delle chiese immersive e mostro il modulo di San Lorenzo
+      immersiveList.style.display = 'none';
+      slWrapper.style.display = 'block';
+
+      // pannello panoramiche CHIUSO di default
+      sanLorenzoBoxOpen = false;
+      buildSanLorenzoPanoBox();
+
+      // carico comunque la prima panoramica (anche se il pannello è chiuso)
+      const firstGroup = sanLorenzoGroups[0];
+      if (firstGroup && firstGroup.panoramas && firstGroup.panoramas.length > 0) {
+        loadSanLorenzoPanorama(firstGroup.panoramas[0].id);
+      }
+    }
+
+    function closeImmersiveSanLorenzo() {
+      const immersiveList  = document.getElementById('immersive-list');
+      const slWrapper      = document.getElementById('immersive-sanlorenzo-wrapper');
+
+      if (slWrapper) slWrapper.style.display = 'none';
+      if (immersiveList) immersiveList.style.display = 'block';
+    }
+
+    function toggleSanLorenzoBox() {
+      sanLorenzoBoxOpen = !sanLorenzoBoxOpen;
+
+      const body = document.getElementById('sanlorenzo-pano-body');
+      const icon = document.getElementById('sanlorenzo-pano-toggle-icon');
+
+      if (!body || !icon) return;
+
+      body.style.display = sanLorenzoBoxOpen ? 'block' : 'none';
+      icon.textContent   = sanLorenzoBoxOpen ? '▲' : '▼';
+    }
+
+    function buildSanLorenzoPanoBox() {
+      const body = document.getElementById('sanlorenzo-pano-body');
+      const icon = document.getElementById('sanlorenzo-pano-toggle-icon');
+      if (!body) return;
+
+      body.innerHTML = "";
+
+      sanLorenzoGroups.forEach(group => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'immersive-group';
+
+        const title = document.createElement('div');
+        title.className = 'immersive-group-title';
+        title.textContent = group.label;
+        groupDiv.appendChild(title);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'immersive-pano-buttons';
+
+        group.panoramas.forEach(pano => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'immersive-pano-btn';
+          btn.textContent = pano.label;
+          btn.dataset.panoId = pano.id;
+          btn.onclick = function(event) {
+            event.stopPropagation(); // ← evita chiusura quando clicchi un pulsante
+            loadSanLorenzoPanorama(pano.id);
+          };
+          btnRow.appendChild(btn);
+        });
+
+        groupDiv.appendChild(btnRow);
+        body.appendChild(groupDiv);
+      });
+
+      // impedisce che clic dentro la tendina chiudano la tendina
+      body.onclick = function(event) {
+        event.stopPropagation();
+      };
+
+      body.style.display = sanLorenzoBoxOpen ? 'block' : 'none';
+
+      if (icon) {
+        icon.textContent = sanLorenzoBoxOpen ? '▲' : '▼';
+      }
+    }
+
+    function loadSanLorenzoPanorama(panoId) {
+      // cerco la panoramica corrispondente
+      let pano = null;
+      for (let i = 0; i < sanLorenzoGroups.length; i++) {
+        const group = sanLorenzoGroups[i];
+        for (let j = 0; j < group.panoramas.length; j++) {
+          if (group.panoramas[j].id === panoId) {
+            pano = group.panoramas[j];
+            break;
+          }
+        }
+        if (pano) break;
+      }
+
+      if (!pano) return;
+
+      // salvo l'indice corrente nell'array piatto
+      const flatIndex = sanLorenzoFlat.findIndex(p => p.id === panoId);
+      if (flatIndex !== -1) {
+        currentSanLorenzoIndex = flatIndex;
+      }
+
+      // aggiorno stato active sui pulsanti
+      const buttons = document.querySelectorAll('.immersive-pano-btn');
+      buttons.forEach(btn => {
+        if (btn.dataset.panoId === panoId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // viewer 360° con Pannellum
+      const viewerContainer = document.getElementById('sanlorenzo-panorama');
+      if (!viewerContainer) return;
+
+      // svuoto il contenitore per evitare residui del viewer precedente
+      viewerContainer.innerHTML = "";
+
+      // creo (o ricreo) il viewer 360°
+      sanLorenzoViewer = pannellum.viewer('sanlorenzo-panorama', {
+        type: "equirectangular",
+        panorama: pano.img,      // percorso dell'immagine 360°
+        autoLoad: true,
+        showZoomCtrl: true,
+        showFullscreenCtrl: false,
+        compass: false,
+        hfov: 90,                // ampiezza campo visivo iniziale
+        pitch: 0,
+        yaw: 0
+      });
+    }
+
+    function sanLorenzoPrevPano() {
+      if (!sanLorenzoFlat.length) return;
+      // passo alla panoramica precedente (ciclo in modo circolare)
+      currentSanLorenzoIndex =
+        (currentSanLorenzoIndex - 1 + sanLorenzoFlat.length) % sanLorenzoFlat.length;
+
+      const pano = sanLorenzoFlat[currentSanLorenzoIndex];
+      if (pano) {
+        loadSanLorenzoPanorama(pano.id);
+      }
+    }
+
+    function sanLorenzoNextPano() {
+      if (!sanLorenzoFlat.length) return;
+      // passo alla panoramica successiva (ciclo in modo circolare)
+      currentSanLorenzoIndex =
+        (currentSanLorenzoIndex + 1) % sanLorenzoFlat.length;
+
+      const pano = sanLorenzoFlat[currentSanLorenzoIndex];
+      if (pano) {
+        loadSanLorenzoPanorama(pano.id);
+      }
+    }
+
+/* PERCORSO BASE – 1h (tappe + audio + immagini) */
+
+    const stops = [
+      {
+        title: "1. Chiesa di San Lorenzo ad Septimum",
+        text:  "L’abbazia lungo l’antica via Campana, origine longobarda e cuore altomedievale del territorio.",
+        audio: "audio/base/01_san_lorenzo.mp3",
+        img:   "icons/percorso_base/01_san_lorenzo.jpg"
+      },
+      {
+        title: "2. Chiesa di San Biagio",
+        text:  "Complesso monastico lungo via San Biagio, nodo tra la città normanna e le espansioni successive.",
+        audio: "audio/base/02_san_biagio.mp3",
+        img:   "icons/percorso_base/02_san_biagio.jpg"
+      },
+      {
+        title: "3. Porta San Giovanni",
+        text:  "Una delle antiche porte urbiche, accesso controllato al nucleo fortificato medievale.",
+        audio: "audio/base/03_porta_san_giovanni.mp3",
+        img:   "icons/percorso_base/03_porta_san_giovanni.jpg"
+      },
+      {
+        title: "4. Castello Normanno Svevo",
+        text:  "Centro del potere militare e politico, oggi fortemente trasformato ma ancora riconoscibile.",
+        audio: "audio/base/04_castello_normanno_svevo.mp3",
+        img:   "icons/percorso_base/04_castello_normanno_svevo.jpg"
+      },
+      {
+        title: "5. Cattedrale di San Paolo",
+        text:  "La cattedrale normanna affacciata su Piazza Duomo, riferimento religioso principale della città.",
+        audio: "audio/base/05_cattedrale_san_paolo.mp3",
+        img:   "icons/percorso_base/05_cattedrale_san_paolo.jpg"
+      },
+      {
+        title: "6. Chiesa di Santa Croce",
+        text:  "Complesso religioso a sud del centro, legato alle trasformazioni d’età moderna.",
+        audio: "audio/base/06_santa_croce.mp3",
+        img:   "icons/percorso_base/06_santa_croce.jpg"
+      },
+      {
+        title: "7. Quartiere Lemitone",
+        text:  "Settore urbano denso e regolare, chiave per leggere l’espansione novecentesca di Aversa.",
+        audio: "audio/base/07_quartiere_lemitone.mp3",
+        img:   "icons/percorso_base/07_quartiere_lemitone.jpg"
+      },
+      {
+        title: "8. Porta Napoli",
+        text:  "Antico accesso meridionale verso Napoli, punto conclusivo dell’itinerario urbano.",
+        audio: "audio/base/08_porta_napoli.mp3",
+        img:   "icons/percorso_base/08_porta_napoli.jpg"
+      }
+    ];
+
+    let currentStop = 0;
+    let stopLastVolume = 0.8;
+
+    function updateStopUI() {
+      const audio   = document.getElementById('stop-audio');
+      const titleEl = document.getElementById('stop-title');
+      const textEl  = document.getElementById('stop-text');
+      const imgEl   = document.getElementById('stop-image');
+      const markers = document.querySelectorAll('.stop-marker');
+
+      if (!audio || !titleEl || !textEl || !imgEl) return;
+
+      const stop = stops[currentStop];
+
+      titleEl.textContent = stop.title;
+      textEl.textContent  = stop.text || "";
+      audio.src = stop.audio || "";
+      audio.pause();
+      stopIsPlaying = false;
+
+      if (stop.img) {
+        imgEl.src = stop.img;
+        imgEl.style.display = "block";
+      } else {
+        imgEl.src = "";
+        imgEl.style.display = "none";
+      }
+
+      markers.forEach(m => m.classList.remove('active'));
+      const active = document.querySelector('.stop-marker[data-stop="'+currentStop+'"]');
+      if (active) active.classList.add('active');
+
+      const playBtn = document.getElementById('stop-play-btn');
+      if (playBtn) playBtn.textContent = "▶";
+    }
+
+    function goToStop(index){
+      if (index < 0 || index >= stops.length) return;
+      currentStop = index;
+      updateStopUI();
+    }
+
+    function nextStop(){
+      if (currentStop < stops.length - 1) {
+        currentStop++;
+        updateStopUI();
+        toggleStopAudio(true);
+      }
+    }
+
+    function initStopAudioControls() {
+      const audio   = document.getElementById('stop-audio');
+      const slider  = document.getElementById('stop-volume-slider');
+      const volBtn  = document.getElementById('stop-volume-btn');
+
+      if (!audio || !slider || !volBtn) return;
+
+      audio.volume = parseFloat(slider.value);
+      stopLastVolume = audio.volume;
+
+      slider.addEventListener('input', () => {
+        audio.volume = parseFloat(slider.value);
+        stopLastVolume = audio.volume;
+        if (audio.volume > 0) {
+          audio.muted = false;
+          volBtn.textContent = "🎧";
+        }
+      });
+
+      volBtn.addEventListener('click', () => {
+        if (audio.muted || audio.volume === 0) {
+          audio.muted = false;
+          audio.volume = stopLastVolume || 0.8;
+          slider.value = audio.volume;
+          volBtn.textContent = "🎧";
+        } else {
+          stopLastVolume = audio.volume;
+          audio.muted = true;
+          audio.volume = 0;
+          slider.value = 0;
+          volBtn.textContent = "🔇";
+        }
+      });
+
+      audio.addEventListener('ended', () => {
+        stopIsPlaying = false;
+        const btn = document.getElementById('stop-play-btn');
+        if (btn) btn.textContent = "▶";
+      });
+    }
+
+    function toggleStopAudio(autoPlay=false){
+      const audio = document.getElementById('stop-audio');
+      const btn   = document.getElementById('stop-play-btn');
+      if (!audio || !btn) return;
+
+      // autoPlay viene usato quando cambio tappa (pallino o "Prosegui")
+      if (autoPlay) {
+        stopIsPlaying = true;
+        audio.currentTime = 0;
+        audio.play();
+        btn.textContent = "⏸";
+        return;
+      }
+
+      // click manuale sul pulsante play/pause
+      if (!stopIsPlaying) {
+        audio.play();
+        stopIsPlaying = true;
+        btn.textContent = "⏸";
+      } else {
+        audio.pause();
+        stopIsPlaying = false;
+        btn.textContent = "▶";
+      }
+    }
+
+    // Apertura percorso base: mostra solo lo specchietto introduttivo
+    function openPercorsoBase() {
+      const intro = document.getElementById('percorso-intro');
+      if (intro) intro.classList.add('visible');
+    }
+
+    // Avvio effettivo del percorso: mappa + pannello tappa
+    function startPercorsoBase() {
+      const phone = document.getElementById('phone');
+      baseOpen = true;
+      phone.classList.add('base-open');
+
+      const intro = document.getElementById('percorso-intro');
+      if (intro) intro.classList.remove('visible');
+
+      currentStop = 0;
+      updateStopUI();
+    }
+
+    function closePercorsoIntro() {
+      const intro = document.getElementById('percorso-intro');
+      if (intro) intro.classList.remove('visible');
+    }
+
+    function closePercorsoBase() {
+      const phone = document.getElementById('phone');
+      baseOpen = false;
+      phone.classList.remove('base-open');
+      const audio = document.getElementById('stop-audio');
+      if (audio) audio.pause();
+    }
+
+    // click sui marker della mappa del percorso base
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.stop-marker');
+      if (!btn) return;
+
+      const idx = parseInt(btn.dataset.stop, 10);
+      if (isNaN(idx)) return;
+
+      goToStop(idx);
+      toggleStopAudio(true);
+    });
+
+    /* INIT */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAlfabetico();
+      renderInaccessibili();
+      showCatalogTab('alfabetico');
+      buildGalleryGrid();
+      initVideoControls();
+      showInsituTab('durata');
+      buildRouteBuilderList();
+      renderCustomRoutes();
+      updateStopUI();
+      initStopAudioControls();
+
+      const searchInput = document.getElementById('search-bar');
+      const clearIcon = document.getElementById('search-clear');
+
+      searchInput.addEventListener('input', (e) => {
+        searchChiese(e.target.value);
+      });
+
+      clearIcon.addEventListener('click', () => {
+        searchInput.value = "";
+        searchChiese("");
+        searchInput.focus();
+      });
+
+      const galleryOverlay = document.getElementById('gallery-overlay');
+      galleryOverlay.addEventListener('touchstart', onGalleryTouchStart, { passive: true });
+      galleryOverlay.addEventListener('touchend', onGalleryTouchEnd, { passive: true });
+
+      const memoryInput = document.getElementById('memory-upload');
+      if (memoryInput) {
+        memoryInput.addEventListener('change', handleMemoryPhotoUpload);
+      }
+    });
+
+    // CHIUSURA AUTOMATICA TENDINA SE SI CLICCA FUORI
+    document.addEventListener("click", function (event) {
+      if (!sanLorenzoBoxOpen) return; // tendina già chiusa
+
+      const body = document.getElementById("sanlorenzo-pano-body");
+      const header = document.querySelector(".immersive-panobox-header");
+
+      if (!body || !header) return;
+
+      // se clicco dentro la tendina → NON chiudere
+      if (body.contains(event.target) || header.contains(event.target)) {
+        return;
+      }
+
+      // se arrivo qui → clic fuori → chiudi tendina
+      sanLorenzoBoxOpen = false;
+      body.style.display = "none";
+
+      const icon = document.getElementById("sanlorenzo-pano-toggle-icon");
+      if (icon) icon.textContent = "▼";
+    });
+    // Registrazione service worker per PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+          console.error('Service worker registration failed:', err);
+        });
+      });
+    }
+
+  </script>
+
+</body>
+</html>
